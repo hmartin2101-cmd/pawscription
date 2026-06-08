@@ -60,6 +60,7 @@ const elements = {
   authForm: document.querySelector("#authForm"),
   authEmail: document.querySelector("#authEmail"),
   authPassword: document.querySelector("#authPassword"),
+  authSubmitBtn: document.querySelector("#authSubmitBtn"),
   regPetName: document.querySelector("#regPetName"),
   regSignalment: document.querySelector("#regSignalment"),
   regPetColor: document.querySelector("#regPetColor"),
@@ -395,8 +396,17 @@ async function saveCurrentUser() {
 }
 
 function setAuthBusy(isBusy) {
+  if (!elements.authSubmitBtn) {
+    console.error("authSubmitBtn not found in HTML");
+    return;
+  }
+
   elements.authSubmitBtn.disabled = isBusy;
-  elements.authSubmitBtn.textContent = isBusy ? "Please wait..." : state.authMode === "signup" ? "Create my account" : "Log in";
+  elements.authSubmitBtn.textContent = isBusy
+    ? "Please wait..."
+    : state.authMode === "signup"
+      ? "Create my account"
+      : "Log in";
 }
 
 function authErrorMessage(error) {

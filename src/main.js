@@ -36,7 +36,7 @@ const firebaseConfig = {
   storageBucket: "pawscription-1a81a.firebasestorage.app",
   messagingSenderId: "497054172299",
   appId: "1:497054172299:web:3344a9791cbdd4f936c08e",
-  measurementId: "G-7ZX3V504S2",
+  measurementId: "G-7ZX3V504S2"
 };
 
 const app = initializeApp(firebaseConfig);

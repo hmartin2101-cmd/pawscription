@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pawscription</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #FDFBF7;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M12 22c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-12 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-4c1.65 0 3-1.35 3-3s-1.35-3-3-3-3 1.35-3 3 1.35 3 3 3z' fill='%23CC5500' fill-opacity='0.02'/%3E%3C/svg%3E");
+    }
+  </style>
+</head>
+<body class="min-h-screen text-stone-700 pb-16">
+
+  <div id="authPortal" class="fixed inset-0 bg-[#CC5500]/10 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-[2.5rem] p-8 shadow-2xl max-w-md w-full space-y-6 border border-orange-100 my-auto">
+      <div class="text-center">
+        <div class="text-4xl justify-center flex mb-2">Paws</div>
+        <h1 class="text-4xl font-black text-[#CC5500] tracking-tight">Pawscription</h1>
+        <p class="text-stone-400 font-bold text-xs mt-1 uppercase tracking-wider">Medication care for pets</p>
+      </div>
+
+      <div class="flex bg-stone-100 p-1.5 rounded-2xl border border-stone-200/60" id="authTabs">
+        <button id="tabLogin" class="w-1/2 py-2.5 rounded-xl font-black text-sm bg-white text-[#CC5500] shadow-sm transition-all">Log In</button>
+        <button id="tabSignup" class="w-1/2 py-2.5 rounded-xl font-black text-sm text-stone-500 hover:text-stone-800 transition-all">Create Account</button>
+      </div>
+
+      <form id="authForm" class="space-y-4">
+        <div id="signupFields" class="hidden space-y-4 border-b border-stone-100 pb-4">
+          <div class="bg-orange-50/50 p-3 rounded-2xl border border-orange-100/60 space-y-3">
+            <p class="text-[11px] font-black text-[#CC5500] uppercase tracking-wider">Step 1: Tell us about your pet</p>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Pet Name</label>
+              <input id="regPetName" class="w-full p-3 rounded-xl border border-stone-200 bg-white text-sm focus:outline-none focus:border-[#CC5500]" placeholder="e.g., Oliver" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Breed or quick profile</label>
+              <input id="regSignalment" class="w-full p-3 rounded-xl border border-stone-200 bg-white text-sm focus:outline-none focus:border-[#CC5500]" placeholder="e.g., Golden Retriever" />
+            </div>
+            <div class="flex items-center justify-between px-1 pt-1">
+              <label class="text-xs font-bold text-stone-500 uppercase">Pet color:</label>
+              <input type="color" id="regPetColor" value="#CC5500" class="w-10 h-8 rounded-lg cursor-pointer border border-stone-200 bg-transparent">
+            </div>
+          </div>
+          <div>
+            <p class="text-[11px] font-black text-stone-400 uppercase tracking-wider mb-2">Step 2: Your info</p>
+            <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Your name</label>
+            <input id="regOwnerName" class="w-full p-3 rounded-xl border border-stone-200 bg-white text-sm focus:outline-none focus:border-[#CC5500]" placeholder="e.g., Sarah Martin" />
+          </div>
+        </div>
+
+        <div id="passwordContainer" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-stone-600 uppercase mb-1 px-1">Email</label>
+            <input id="authEmail" type="email" required class="w-full p-3.5 rounded-xl border border-stone-200 bg-stone-50/40 focus:outline-none focus:border-[#CC5500] focus:bg-white text-sm" placeholder="name@domain.com" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-600 uppercase mb-1 px-1">Password</label>
+            <input id="authPassword" type="password" required class="w-full p-3.5 rounded-xl border border-stone-200 bg-stone-50/40 focus:outline-none focus:border-[#CC5500] focus:bg-white text-sm" placeholder="password" />
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="authSubmitBtn" class="w-full bg-[#CC5500] hover:bg-[#b34a00] text-white font-black py-3.5 rounded-xl transition-all shadow-md tracking-wide text-md">
+            Log in
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="ownerPortal" class="hidden max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[2rem] shadow-sm border border-stone-100 gap-4">
+      <div>
+        <h1 id="welcomeGreeting" class="text-3xl font-black text-stone-800 tracking-tight">Hi there</h1>
+        <p class="text-sm font-bold text-stone-400 mt-0.5">Keep today's medications calm, clear, and checked off.</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="addPetBtn" class="bg-[#CC5500] hover:bg-[#b34a00] text-white font-black px-5 py-3 rounded-xl shadow-sm text-sm transition-all">Add pet</button>
+        <button id="logoutBtn" class="bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold px-5 py-3 rounded-xl text-sm transition-all">Log out</button>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-wrap items-center gap-3">
+      <span class="text-xs font-black text-stone-400 uppercase px-1 tracking-wider">Choose a pet:</span>
+      <div id="petFilterBar" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8 items-start">
+      <div class="space-y-6">
+        <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-stone-100 space-y-4">
+          <h2 class="text-2xl font-black text-[#CC5500] tracking-tight">Add a Medication</h2>
+          <form id="medForm" class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Pet</label>
+              <select id="petSelector" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Medication name</label>
+                <input id="medName" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Dose</label>
+                <input id="dosage" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" placeholder="e.g., 1 pill" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">How often?</label>
+              <select id="frequency" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+                <option value="daily">Once a day</option>
+                <option value="twice-daily">Twice a day</option>
+                <option value="thrice-daily">Three times a day</option>
+                <option value="weekly">Once a week</option>
+                <option value="monthly">Once a month</option>
+                <option value="as-needed">Only when needed</option>
+              </select>
+            </div>
+            <div id="dynamicTimeContainer" class="bg-stone-50 p-3 rounded-xl border border-stone-100 space-y-2"></div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Medication instructions</label>
+              <textarea id="medInstructions" rows="3" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" placeholder="Example: Give with breakfast, hide in a treat, or avoid giving with other meds."></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">When should Pawscription remind you?</label>
+              <select id="reminderMinutes" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+                <option value="0">Right at dose time</option>
+                <option value="5">5 minutes before</option>
+                <option value="15" selected>15 minutes before</option>
+                <option value="30">30 minutes before</option>
+                <option value="60">1 hour before</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-red-500 mb-1 px-1">Important care alert</label>
+              <textarea id="careAlert" rows="3" class="w-full p-3 rounded-xl border border-red-100 bg-red-50/60 text-sm focus:outline-none focus:border-red-400" placeholder="Example: Give with food. Call the vet if vomiting starts."></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">How many do you have?</label>
+                <input id="totalStock" type="number" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Refill by</label>
+                <input id="refillReminderDate" type="date" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
+              </div>
+            </div>
+            <button type="submit" class="w-full bg-[#CC5500] text-white font-black py-3.5 rounded-xl shadow-sm hover:bg-[#b34a00] transition-all">Save medication plan</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 space-y-8">
+        <div>
+          <h2 class="text-2xl font-black text-stone-800 tracking-tight mb-4 px-1">Today's Medication Plans</h2>
+          <div id="medList" class="grid md:grid-cols-2 gap-6"></div>
+        </div>
+        <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-stone-100">
+          <h2 class="text-2xl font-black text-stone-800 tracking-tight mb-4">Monthly Dose History</h2>
+          <div id="calendarGrid" class="grid grid-cols-7 gap-2.5 text-center text-xs font-bold"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="petModal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-[2rem] p-6 max-w-md w-full space-y-4">
+      <h3 class="text-2xl font-black">Add a Pet</h3>
+      <input id="modalPetName" class="w-full p-3 rounded-xl border border-stone-200" placeholder="Pet name" />
+      <input id="modalSignalment" class="w-full p-3 rounded-xl border border-stone-200" placeholder="Breed or quick profile" />
+      <div class="flex items-center justify-between border-t border-stone-100 pt-3">
+        <span class="text-xs font-bold text-stone-500">Pet color:</span>
+        <input type="color" id="modalPetColor" value="#CC5500">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="closePetModalBtn" class="px-4 py-2 text-stone-400 font-bold">Cancel</button>
+        <button id="savePetModalBtn" class="bg-[#CC5500] text-white px-5 py-2 rounded-xl font-black">Save pet</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editPetModal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-[2rem] p-6 max-w-md w-full space-y-4">
+      <h3 class="text-2xl font-black">Edit Pet</h3>
+      <input type="hidden" id="editPetIndex" />
+      <input id="editModalPetName" class="w-full p-3 rounded-xl border border-stone-200" />
+      <input id="editModalSignalment" class="w-full p-3 rounded-xl border border-stone-200" />
+      <div class="flex items-center justify-between border-t border-stone-100 pt-3">
+        <span class="text-xs font-bold text-stone-500">Pet color:</span>
+        <input type="color" id="editModalPetColor">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="closeEditPetModalBtn" class="px-4 py-2 text-stone-400 font-bold">Cancel</button>
+        <button id="saveEditPetModalBtn" class="bg-[#CC5500] text-white px-5 py-2 rounded-xl font-black">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

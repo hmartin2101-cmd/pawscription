@@ -409,9 +409,12 @@ function authErrorMessage(error) {
   if (code.includes("operation-not-allowed")) return "Email/password sign-in is not turned on in Firebase yet. Go to Firebase Authentication > Sign-in method > Email/Password and enable it.";
   if (code.includes("unauthorized-domain")) return "This website domain is not authorized in Firebase yet. Add your GitHub Pages domain in Firebase Authentication > Settings > Authorized domains.";
   if (code.includes("api-key-not-valid") || code.includes("invalid-api-key")) return "The Firebase API key in src/main.js does not match your Firebase project. Copy the newest firebaseConfig from Firebase and paste it into main.js.";
+  if (code.includes("permission-denied")) return "Firebase blocked the data save. Check Firestore Database > Rules and make sure each user can read/write their own users/{userId} document.";
+  if (code.includes("failed-precondition") || code.includes("not-found")) return "Firestore may not be created yet. Go to Firebase > Firestore Database and create the database.";
+  if (code.includes("unavailable")) return "Firebase is temporarily unavailable or blocked by the network. Try again in a minute.";
   if (code.includes("network-request-failed")) return "Firebase could not connect. Check your internet connection and try again.";
 
-  return `Firebase sign-in error: ${code || "unknown error"}. Please check the browser console for details.`;
+  return `Firebase error: ${code || "no error code"} - ${error?.message || "No message provided"}`;
 }
 
 function makeId(prefix) {

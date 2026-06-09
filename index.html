@@ -24,7 +24,7 @@
     }
 
     .soft-glass {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(12px);
     }
 
@@ -32,65 +32,15 @@
       background: rgba(255, 250, 245, 0.95);
       box-shadow: 0 20px 55px rgba(120, 80, 40, 0.12);
     }
-
-    .login-logo-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      text-align: left;
-    }
-
-    .login-logo-img {
-      width: 88px;
-      height: 88px;
-      object-fit: contain;
-      flex-shrink: 0;
-    }
-
-    .login-title-wrap {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .login-title-wrap h1 {
-      line-height: 1;
-      margin: 0;
-    }
-
-    .login-title-wrap p {
-      margin-top: 8px;
-    }
-
-    @media (max-width: 520px) {
-      .login-logo-wrap {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
-      }
-
-      .login-logo-img {
-        width: 74px;
-        height: 74px;
-      }
-    }
   </style>
 </head>
 <body class="min-h-screen text-stone-700 pb-16">
 
   <div id="authPortal" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
     <div class="login-card rounded-[2.5rem] p-8 shadow-2xl max-w-md w-full space-y-6 border border-orange-100 my-auto">
-      <div class="login-logo-wrap">
-        <img
-          src="./assets/login-pets.png"
-          alt="Cat and dog illustration"
-          class="login-logo-img"
-        />
-        <div class="login-title-wrap">
-          <h1 class="text-4xl font-black text-[#CC5500] tracking-tight">Pawscription</h1>
-          <p class="text-stone-400 font-bold text-xs uppercase tracking-[0.18em]">Medication tracking for your pets</p>
-        </div>
+      <div class="text-center">
+        <h1 class="text-4xl font-black text-[#CC5500] tracking-tight">Pawscription</h1>
+        <p class="text-stone-400 font-bold text-xs mt-1 uppercase tracking-[0.18em]">Medication tracking for your pets</p>
       </div>
 
       <div class="flex bg-stone-100/80 p-1.5 rounded-2xl border border-stone-200/70" id="authTabs">

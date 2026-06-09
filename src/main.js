@@ -520,45 +520,89 @@ function launchPawConfetti(sourceElement) {
   confettiLayer.className = "paw-confetti-layer";
   document.body.append(confettiLayer);
 
-  const pieces = ["🐾", "✨", "🧡", "💚", "✦", "•"];
-  const colors = ["#CC5500", "#7BAE7F", "#F7B267", "#F79D65", "#8FC0A9", "#E7A977"];
+  const palette = [
+    "#FFD400",
+    "#F39A00",
+    "#F44F4F",
+    "#C55BFF",
+    "#7B82FF",
+    "#F3C400"
+  ];
 
-  for (let index = 0; index < 28; index++) {
+  const pieceTypes = [
+    "streamer",
+    "streamer",
+    "streamer",
+    "capsule",
+    "capsule",
+    "capsule",
+    "dot",
+    "dot",
+    "star",
+    "star"
+  ];
+
+  for (let index = 0; index < 32; index++) {
+    const type = pieceTypes[Math.floor(Math.random() * pieceTypes.length)];
     const piece = document.createElement("span");
-    const symbol = pieces[Math.floor(Math.random() * pieces.length)];
-    const driftX = Math.random() * 180 - 90;
-    const driftY = -(50 + Math.random() * 45);
-    const fallDistance = 95 + Math.random() * 90;
-    const size = 10 + Math.random() * 12;
-    const duration = 850 + Math.random() * 500;
-    const delay = Math.random() * 90;
+    piece.className = `paw-confetti-piece confetti-${type}`;
 
-    piece.className = "paw-confetti-piece";
-    piece.textContent = symbol;
+    const color = palette[Math.floor(Math.random() * palette.length)];
+    const driftX = Math.random() * 220 - 110;
+    const liftY = -(60 + Math.random() * 80);
+    const fallDistance = 110 + Math.random() * 120;
+    const rotate = Math.random() * 540 - 270;
+    const duration = 900 + Math.random() * 550;
+    const delay = Math.random() * 80;
+
     piece.style.left = `${originX}px`;
     piece.style.top = `${originY}px`;
-    piece.style.fontSize = `${size}px`;
-    piece.style.color = colors[Math.floor(Math.random() * colors.length)];
     piece.style.setProperty("--drift-x", `${driftX}px`);
-    piece.style.setProperty("--lift-y", `${driftY}px`);
+    piece.style.setProperty("--lift-y", `${liftY}px`);
     piece.style.setProperty("--fall-y", `${fallDistance}px`);
-    piece.style.setProperty("--spin", `${Math.random() * 540 - 270}deg`);
+    piece.style.setProperty("--spin", `${rotate}deg`);
+    piece.style.setProperty("--confetti-color", color);
     piece.style.animationDuration = `${duration}ms`;
     piece.style.animationDelay = `${delay}ms`;
+
+    if (type === "streamer") {
+      piece.style.width = `${14 + Math.random() * 10}px`;
+      piece.style.height = `${46 + Math.random() * 24}px`;
+      piece.style.borderRadius = "999px";
+    }
+
+    if (type === "capsule") {
+      piece.style.width = `${18 + Math.random() * 12}px`;
+      piece.style.height = `${34 + Math.random() * 16}px`;
+      piece.style.borderRadius = "999px";
+    }
+
+    if (type === "dot") {
+      const size = 12 + Math.random() * 10;
+      piece.style.width = `${size}px`;
+      piece.style.height = `${size}px`;
+      piece.style.borderRadius = "999px";
+    }
+
+    if (type === "star") {
+      const size = 18 + Math.random() * 12;
+      piece.style.width = `${size}px`;
+      piece.style.height = `${size}px`;
+    }
 
     confettiLayer.append(piece);
   }
 
   const message = document.createElement("div");
   message.className = "paw-confetti-message";
-  message.textContent = "On time! 🐾";
+  message.textContent = "On time!";
   message.style.left = `${originX}px`;
   message.style.top = `${Math.max(originY - 34, 24)}px`;
   confettiLayer.append(message);
 
   window.setTimeout(() => {
     confettiLayer.remove();
-  }, 1700);
+  }, 1800);
 }
 
 function ensureConfettiStyles() {
@@ -577,15 +621,84 @@ function ensureConfettiStyles() {
 
     .paw-confetti-piece {
       position: absolute;
-      display: inline-block;
-      line-height: 1;
-      font-weight: 900;
+      display: block;
       opacity: 0;
       transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
       animation-name: pawConfettiBurst;
       animation-timing-function: cubic-bezier(.19,.84,.28,1);
       animation-fill-mode: forwards;
-      text-shadow: 0 3px 10px rgba(120, 80, 40, 0.12);
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.12));
+    }
+
+    .confetti-streamer {
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255,255,255,0.58) 0%,
+          rgba(255,255,255,0.18) 26%,
+          var(--confetti-color) 27%,
+          color-mix(in srgb, var(--confetti-color) 84%, black 16%) 100%
+        );
+      border-radius: 999px;
+      box-shadow:
+        inset -4px -6px 8px rgba(0,0,0,0.08),
+        inset 3px 4px 6px rgba(255,255,255,0.35);
+    }
+
+    .confetti-capsule {
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,0.52) 0%,
+          rgba(255,255,255,0.18) 28%,
+          var(--confetti-color) 29%,
+          color-mix(in srgb, var(--confetti-color) 80%, black 20%) 100%
+        );
+      border-radius: 999px;
+      box-shadow:
+        inset -3px -5px 8px rgba(0,0,0,0.10),
+        inset 3px 4px 6px rgba(255,255,255,0.34);
+    }
+
+    .confetti-dot {
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255,255,255,0.75) 0 24%, transparent 26%),
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,0.20) 0%,
+          var(--confetti-color) 35%,
+          color-mix(in srgb, var(--confetti-color) 80%, black 20%) 100%
+        );
+      border-radius: 999px;
+      box-shadow:
+        inset -2px -4px 6px rgba(0,0,0,0.10),
+        inset 2px 2px 5px rgba(255,255,255,0.25);
+    }
+
+    .confetti-star {
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.78) 0 18%, transparent 20%),
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,0.18) 0%,
+          var(--confetti-color) 35%,
+          color-mix(in srgb, var(--confetti-color) 82%, black 18%) 100%
+        );
+      clip-path: polygon(
+        50% 0%,
+        61% 34%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 34%
+      );
+      box-shadow:
+        inset -2px -4px 6px rgba(0,0,0,0.10),
+        inset 2px 2px 5px rgba(255,255,255,0.22);
     }
 
     .paw-confetti-message {
@@ -607,17 +720,17 @@ function ensureConfettiStyles() {
     @keyframes pawConfettiBurst {
       0% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+        transform: translate(-50%, -50%) scale(0.55) rotate(0deg);
       }
 
-      12% {
+      10% {
         opacity: 1;
       }
 
-      35% {
+      34% {
         opacity: 1;
         transform: translate(
-          calc(-50% + var(--drift-x) * 0.55),
+          calc(-50% + var(--drift-x) * 0.5),
           calc(-50% + var(--lift-y))
         ) scale(1) rotate(calc(var(--spin) * 0.45));
       }

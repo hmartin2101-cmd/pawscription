@@ -419,7 +419,7 @@ async function toggleDose(checkbox) {
   await saveCurrentUser();
 
   if (shouldCelebrate) {
-    launchPawConfetti();
+    launchPawConfetti(checkbox);
   }
 
   refreshDashboard();
@@ -450,7 +450,7 @@ async function setDoseStatus(button) {
   await saveCurrentUser();
 
   if (newStatus === "on-time") {
-    launchPawConfetti();
+    launchPawConfetti(button);
   }
 
   refreshDashboard();
@@ -509,36 +509,40 @@ async function saveCurrentUser() {
   }, { merge: true });
 }
 
-function launchPawConfetti() {
+function launchPawConfetti(sourceElement) {
   ensureConfettiStyles();
+
+  const rect = sourceElement?.getBoundingClientRect?.();
+  const originX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+  const originY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
 
   const confettiLayer = document.createElement("div");
   confettiLayer.className = "paw-confetti-layer";
   document.body.append(confettiLayer);
 
-  const pieces = ["🐾", "✨", "💚", "🧡", "★", "✦"];
-  const colors = ["#CC5500", "#7BAE7F", "#F7B267", "#F79D65", "#8FC0A9", "#F4A261"];
+  const pieces = ["🐾", "✨", "🧡", "💚", "✦", "•"];
+  const colors = ["#CC5500", "#7BAE7F", "#F7B267", "#F79D65", "#8FC0A9", "#E7A977"];
 
-  for (let index = 0; index < 34; index++) {
+  for (let index = 0; index < 28; index++) {
     const piece = document.createElement("span");
-    const isEmoji = index % 3 === 0;
     const symbol = pieces[Math.floor(Math.random() * pieces.length)];
-    const startX = 50 + (Math.random() * 16 - 8);
-    const driftX = Math.random() * 220 - 110;
-    const fallDistance = 260 + Math.random() * 220;
-    const size = isEmoji ? 18 + Math.random() * 12 : 10 + Math.random() * 10;
-    const duration = 950 + Math.random() * 650;
-    const delay = Math.random() * 120;
+    const driftX = Math.random() * 180 - 90;
+    const driftY = -(50 + Math.random() * 45);
+    const fallDistance = 95 + Math.random() * 90;
+    const size = 10 + Math.random() * 12;
+    const duration = 850 + Math.random() * 500;
+    const delay = Math.random() * 90;
 
     piece.className = "paw-confetti-piece";
     piece.textContent = symbol;
-    piece.style.left = `${startX}%`;
-    piece.style.top = "42%";
+    piece.style.left = `${originX}px`;
+    piece.style.top = `${originY}px`;
     piece.style.fontSize = `${size}px`;
     piece.style.color = colors[Math.floor(Math.random() * colors.length)];
     piece.style.setProperty("--drift-x", `${driftX}px`);
+    piece.style.setProperty("--lift-y", `${driftY}px`);
     piece.style.setProperty("--fall-y", `${fallDistance}px`);
-    piece.style.setProperty("--spin", `${Math.random() * 720 - 360}deg`);
+    piece.style.setProperty("--spin", `${Math.random() * 540 - 270}deg`);
     piece.style.animationDuration = `${duration}ms`;
     piece.style.animationDelay = `${delay}ms`;
 
@@ -547,12 +551,14 @@ function launchPawConfetti() {
 
   const message = document.createElement("div");
   message.className = "paw-confetti-message";
-  message.textContent = "Dose done on time! 🐾";
+  message.textContent = "On time! 🐾";
+  message.style.left = `${originX}px`;
+  message.style.top = `${Math.max(originY - 34, 24)}px`;
   confettiLayer.append(message);
 
   window.setTimeout(() => {
     confettiLayer.remove();
-  }, 1900);
+  }, 1700);
 }
 
 function ensureConfettiStyles() {
@@ -572,41 +578,48 @@ function ensureConfettiStyles() {
     .paw-confetti-piece {
       position: absolute;
       display: inline-block;
-      font-weight: 900;
       line-height: 1;
+      font-weight: 900;
       opacity: 0;
-      transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+      transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
       animation-name: pawConfettiBurst;
-      animation-timing-function: cubic-bezier(.18,.8,.28,1);
+      animation-timing-function: cubic-bezier(.19,.84,.28,1);
       animation-fill-mode: forwards;
       text-shadow: 0 3px 10px rgba(120, 80, 40, 0.12);
     }
 
     .paw-confetti-message {
       position: absolute;
-      left: 50%;
-      top: 38%;
-      transform: translate(-50%, -50%) scale(0.92);
-      background: rgba(255, 255, 255, 0.92);
+      transform: translate(-50%, -100%) scale(0.9);
+      background: rgba(255, 255, 255, 0.96);
       color: #CC5500;
-      border: 1px solid rgba(204, 85, 0, 0.16);
-      box-shadow: 0 18px 45px rgba(120, 80, 40, 0.18);
+      border: 1px solid rgba(204, 85, 0, 0.14);
+      box-shadow: 0 12px 28px rgba(120, 80, 40, 0.16);
       border-radius: 999px;
-      padding: 12px 18px;
-      font-size: 14px;
+      padding: 8px 14px;
+      font-size: 12px;
       font-weight: 900;
-      animation: pawConfettiMessage 1500ms ease forwards;
+      animation: pawConfettiMessage 1400ms ease forwards;
       backdrop-filter: blur(10px);
+      white-space: nowrap;
     }
 
     @keyframes pawConfettiBurst {
       0% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.7) rotate(0deg);
+        transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
       }
 
       12% {
         opacity: 1;
+      }
+
+      35% {
+        opacity: 1;
+        transform: translate(
+          calc(-50% + var(--drift-x) * 0.55),
+          calc(-50% + var(--lift-y))
+        ) scale(1) rotate(calc(var(--spin) * 0.45));
       }
 
       100% {
@@ -614,29 +627,29 @@ function ensureConfettiStyles() {
         transform: translate(
           calc(-50% + var(--drift-x)),
           calc(-50% + var(--fall-y))
-        ) scale(1.05) rotate(var(--spin));
+        ) scale(0.96) rotate(var(--spin));
       }
     }
 
     @keyframes pawConfettiMessage {
       0% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.86);
+        transform: translate(-50%, -90%) scale(0.88);
       }
 
       18% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
+        transform: translate(-50%, -100%) scale(1);
       }
 
       78% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
+        transform: translate(-50%, -100%) scale(1);
       }
 
       100% {
         opacity: 0;
-        transform: translate(-50%, -68%) scale(0.96);
+        transform: translate(-50%, -118%) scale(0.96);
       }
     }
   `;

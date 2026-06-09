@@ -1,11 +1,13 @@
 const $ = (selector) => document.querySelector(selector);
 
 const DOSE_GRACE_MINUTES = 15;
+const ALL_PETS_ID = "all";
 
 const calendarState = {
   viewDate: new Date(),
   lastMedications: [],
-  lastSelectedPetId: "",
+  lastPets: [],
+  lastSelectedPetId: ALL_PETS_ID,
 };
 
 let calendarModalReady = false;
@@ -63,11 +65,23 @@ export function renderPetControls(pets, selectedPetId) {
     return;
   }
 
+  const isAllSelected = selectedPetId === ALL_PETS_ID || !selectedPetId;
+
+  const allPetsButton = document.createElement("button");
+  allPetsButton.type = "button";
+  allPetsButton.dataset.action = "select-pet";
+  allPetsButton.dataset.petId = ALL_PETS_ID;
+  allPetsButton.className = isAllSelected
+    ? "px-4 py-2 rounded-xl bg-[#CC5500] text-white font-black text-sm shadow-sm"
+    : "px-4 py-2 rounded-xl bg-stone-100 text-stone-500 font-black text-sm hover:bg-stone-200";
+  allPetsButton.textContent = "Show all pets";
+  ui.petFilterBar.append(allPetsButton);
+
   pets.forEach((pet, index) => {
     const option = document.createElement("option");
     option.value = pet.id;
     option.textContent = pet.name;
-    option.selected = pet.id === selectedPetId;
+    option.selected = pet.id === selectedPetId || (isAllSelected && index === 0);
     ui.petSelector.append(option);
 
     const wrapper = document.createElement("div");
@@ -122,43 +136,54 @@ export function renderTimeInputs(frequency) {
 }
 
 export function renderMedications(medications, pets, selectedPetId) {
-  const visibleMeds = medications.filter((med) => med.petId === selectedPetId);
+  const isAllSelected = selectedPetId === ALL_PETS_ID || !selectedPetId;
+  const visibleMeds = isAllSelected
+    ? medications
+    : medications.filter((med) => med.petId === selectedPetId);
 
   ui.medList.className = "grid sm:grid-cols-2 xl:grid-cols-3 gap-3";
 
-  if (!selectedPetId) {
+  if (pets.length === 0) {
     ui.medList.innerHTML = emptyState("Add a pet before making a medication plan.");
     return;
   }
 
   if (visibleMeds.length === 0) {
-    ui.medList.innerHTML = emptyState("No medications yet for this pet.");
+    ui.medList.innerHTML = emptyState(isAllSelected ? "No medications yet." : "No medications yet for this pet.");
     return;
   }
 
   ui.medList.innerHTML = visibleMeds.map((med) => renderMedicationCard(med, pets)).join("");
 }
 
-export function renderCalendar(medications, selectedPetId) {
+export function renderCalendar(medications, pets, selectedPetId) {
   ensureCalendarDetailsModal();
 
   calendarState.lastMedications = medications;
-  calendarState.lastSelectedPetId = selectedPetId;
+  calendarState.lastPets = pets;
+  calendarState.lastSelectedPetId = selectedPetId || ALL_PETS_ID;
   ui.calendarGrid.className = "space-y-4";
 
-  if (!selectedPetId) {
+  if (pets.length === 0) {
     ui.calendarGrid.innerHTML = emptyCalendarState("Add a pet to see medication history.");
     return;
   }
 
-  const petMeds = medications.filter((med) => med.petId === selectedPetId);
-  const petName = getSelectedPetName();
+  const isAllSelected = !selectedPetId || selectedPetId === ALL_PETS_ID;
+  const calendarPets = isAllSelected
+    ? pets
+    : pets.filter((pet) => pet.id === selectedPetId);
+
+  const visiblePetIds = new Set(calendarPets.map((pet) => pet.id));
+  const visibleMeds = medications.filter((med) => visiblePetIds.has(med.petId));
+
   const year = calendarState.viewDate.getFullYear();
   const month = calendarState.viewDate.getMonth();
   const firstDay = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstWeekday = firstDay.getDay();
   const monthTitle = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(firstDay);
+  const filterTitle = isAllSelected ? "All pets" : calendarPets[0]?.name || "Selected pet";
 
   const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     .map((day) => `<div class="text-center text-[10px] font-black text-stone-400 uppercase tracking-wider hidden sm:block">${day}</div>`)
@@ -172,32 +197,44 @@ export function renderCalendar(medications, selectedPetId) {
     const dateKey = toDateKey(date);
     const todayKey = toDateKey(new Date());
     const isToday = dateKey === todayKey;
-    const doseEntries = getDoseEntriesForDate(petMeds, dateKey);
-    const refillEntries = getRefillEntriesForDate(petMeds, dateKey);
-    const hasSomethingToShow = doseEntries.length > 0 || refillEntries.length > 0;
+
+    const doseEntries = getDoseEntriesForDate(visibleMeds, dateKey, pets);
+    const refillEntries = getRefillEntriesForDate(visibleMeds, dateKey, pets);
+    const petSummaries = getPetSummariesForDate(dateKey, calendarPets, doseEntries, refillEntries);
+
+    const hasSomethingToShow = petSummaries.length > 0;
     const hasMissedOrLate = doseEntries.some((dose) => dose.status === "missed" || dose.status === "late");
     const hasGiven = doseEntries.some((dose) => dose.log?.givenAt);
+    const hasRefill = refillEntries.length > 0;
 
     return `
-      <div class="rounded-2xl border ${calendarDayClass(isToday, hasMissedOrLate, hasGiven, refillEntries.length)} p-2 min-h-28 sm:min-h-32 text-left overflow-hidden">
+      <div class="rounded-2xl border ${calendarDayClass(isToday, hasMissedOrLate, hasGiven, hasRefill)} p-2 min-h-28 sm:min-h-32 text-left overflow-hidden">
         <div class="flex items-center justify-between gap-2 mb-2">
           <p class="font-black text-sm ${isToday ? "text-[#CC5500]" : "text-stone-600"}">${day}</p>
           ${isToday ? '<span class="text-[9px] font-black text-[#CC5500] uppercase">Today</span>' : ""}
         </div>
 
-        ${hasSomethingToShow ? `
-          <button type="button" data-action="show-calendar-details" data-date-key="${dateKey}" class="w-full text-left rounded-xl px-2 py-1.5 bg-white border border-stone-100 hover:border-[#CC5500]/40 hover:bg-orange-50 transition-all">
-            <span class="block text-xs font-black text-stone-800 truncate">${escapeHtml(petName)}</span>
-            <span class="block text-[10px] font-bold text-stone-400 truncate">View medication details</span>
-          </button>
-        ` : '<p class="text-[10px] font-bold text-stone-300 mt-3">No tracked meds</p>'}
+        ${
+          hasSomethingToShow
+            ? `
+              <div class="space-y-1.5">
+                ${petSummaries.slice(0, 3).map((summary) => renderCalendarPetButton(summary, dateKey)).join("")}
+                ${petSummaries.length > 3 ? `<p class="text-[10px] font-black text-stone-400 px-1">+${petSummaries.length - 3} more pet${petSummaries.length - 3 === 1 ? "" : "s"}</p>` : ""}
+              </div>
+            `
+            : '<p class="text-[10px] font-bold text-stone-300 mt-3">No tracked meds</p>'
+        }
 
-        ${refillEntries.length ? `
-          <div class="mt-2 rounded-xl border border-red-200 bg-red-50 px-2 py-1.5">
-            <p class="text-[10px] font-black text-red-700 leading-tight">Refill medication due</p>
-            <p class="text-[10px] font-bold text-red-500 leading-tight truncate">${refillEntries.map((med) => escapeHtml(med.name)).join(", ")}</p>
-          </div>
-        ` : ""}
+        ${
+          hasRefill
+            ? `
+              <div class="mt-2 rounded-xl border border-red-200 bg-red-50 px-2 py-1.5">
+                <p class="text-[10px] font-black text-red-700 leading-tight">Refill medication due</p>
+                <p class="text-[10px] font-bold text-red-500 leading-tight truncate">${refillEntries.length} medication${refillEntries.length === 1 ? "" : "s"}</p>
+              </div>
+            `
+            : ""
+        }
       </div>
     `;
   }).join("");
@@ -206,10 +243,13 @@ export function renderCalendar(medications, selectedPetId) {
     <div class="bg-white rounded-[2rem] border border-stone-100 shadow-sm p-4 space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <button type="button" id="calendarPrevBtn" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 font-black text-sm">Previous month</button>
+
         <div class="text-center">
           <h3 class="text-2xl font-black text-stone-800 tracking-tight">${monthTitle}</h3>
-          <p class="text-xs font-bold text-stone-400">Click your pet's name on a date to view med history.</p>
+          <p class="text-xs font-bold text-stone-400">Calendar filter: ${escapeHtml(filterTitle)}</p>
+          <p class="text-xs font-bold text-stone-400">Click a pet name on a date to view med history.</p>
         </div>
+
         <div class="flex gap-2 justify-center">
           <button type="button" id="calendarTodayBtn" class="px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#CC5500] font-black text-sm">Today</button>
           <button type="button" id="calendarNextBtn" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 font-black text-sm">Next month</button>
@@ -257,16 +297,20 @@ function bindCalendarEvents() {
 
   $("#calendarTodayBtn")?.addEventListener("click", () => {
     calendarState.viewDate = new Date();
-    renderCalendar(calendarState.lastMedications, calendarState.lastSelectedPetId);
+    renderCalendar(calendarState.lastMedications, calendarState.lastPets, calendarState.lastSelectedPetId);
   });
 
   ui.calendarGrid.querySelectorAll("[data-action='show-calendar-details']").forEach((button) => {
     button.addEventListener("click", () => {
       const dateKey = button.dataset.dateKey;
-      const petMeds = calendarState.lastMedications.filter((med) => med.petId === calendarState.lastSelectedPetId);
-      const doseEntries = getDoseEntriesForDate(petMeds, dateKey);
-      const refillEntries = getRefillEntriesForDate(petMeds, dateKey);
-      showCalendarDetailsModal(dateKey, doseEntries, refillEntries, getSelectedPetName());
+      const petId = button.dataset.petId;
+      const pet = calendarState.lastPets.find((item) => item.id === petId);
+      const petMeds = calendarState.lastMedications.filter((med) => med.petId === petId);
+
+      const doseEntries = getDoseEntriesForDate(petMeds, dateKey, calendarState.lastPets);
+      const refillEntries = getRefillEntriesForDate(petMeds, dateKey, calendarState.lastPets);
+
+      showCalendarDetailsModal(dateKey, doseEntries, refillEntries, pet?.name || "Pet");
     });
   });
 }
@@ -278,7 +322,7 @@ function moveCalendarMonth(amount) {
     1
   );
 
-  renderCalendar(calendarState.lastMedications, calendarState.lastSelectedPetId);
+  renderCalendar(calendarState.lastMedications, calendarState.lastPets, calendarState.lastSelectedPetId);
 }
 
 function ensureCalendarDetailsModal() {
@@ -392,6 +436,20 @@ function closeCalendarDetailsModal() {
   modal.classList.remove("flex");
 }
 
+function renderCalendarPetButton(summary, dateKey) {
+  const detailText = [
+    summary.doseCount ? `${summary.doseCount} dose${summary.doseCount === 1 ? "" : "s"}` : "",
+    summary.refillCount ? `${summary.refillCount} refill${summary.refillCount === 1 ? "" : "s"}` : "",
+  ].filter(Boolean).join(" • ");
+
+  return `
+    <button type="button" data-action="show-calendar-details" data-date-key="${escapeHtml(dateKey)}" data-pet-id="${escapeHtml(summary.pet.id)}" class="w-full text-left rounded-xl px-2 py-1.5 bg-white border border-stone-100 hover:border-[#CC5500]/40 hover:bg-orange-50 transition-all">
+      <span class="block text-xs font-black truncate" style="color:${summary.pet.color || "#CC5500"}">${escapeHtml(summary.pet.name)}</span>
+      <span class="block text-[10px] font-bold text-stone-400 truncate">${detailText || "View details"}</span>
+    </button>
+  `;
+}
+
 function renderModalDoseRow(dose) {
   const wasGiven = Boolean(dose.log?.givenAt);
 
@@ -453,7 +511,7 @@ function renderMedicationCard(med, pets) {
   const pet = pets.find((item) => item.id === med.petId);
   const schedule = med.times.length ? med.times.map(formatTime).join(", ") : "As needed";
   const refillClass = isRefillSoon(med.refillReminderDate) ? "text-red-700 bg-red-50 border-red-100" : "text-emerald-700 bg-emerald-50 border-emerald-100";
-  const todayDoses = getDoseEntriesForDate([med], toDateKey(new Date()));
+  const todayDoses = getDoseEntriesForDate([med], toDateKey(new Date()), pets);
   const activeAlerts = getActiveAlerts(med, todayDoses);
 
   return `
@@ -529,10 +587,28 @@ function renderDoseCheckbox(dose) {
   `;
 }
 
-function getDoseEntriesForDate(medications, dateKey) {
+function getPetSummariesForDate(dateKey, pets, doseEntries, refillEntries) {
+  return pets
+    .map((pet) => {
+      const petDoses = doseEntries.filter((dose) => dose.petId === pet.id);
+      const petRefills = refillEntries.filter((med) => med.petId === pet.id);
+
+      return {
+        pet,
+        dateKey,
+        doseCount: petDoses.length,
+        refillCount: petRefills.length,
+      };
+    })
+    .filter((summary) => summary.doseCount > 0 || summary.refillCount > 0);
+}
+
+function getDoseEntriesForDate(medications, dateKey, pets = []) {
   return medications.flatMap((med) => {
     if (!med.times?.length) return [];
     if (!shouldDoseOccurOnDate(med, dateKey)) return [];
+
+    const pet = pets.find((item) => item.id === med.petId);
 
     return med.times.map((time) => {
       const doseKey = `${dateKey}|${time}`;
@@ -543,6 +619,9 @@ function getDoseEntriesForDate(medications, dateKey) {
         medId: med.id,
         medName: med.name,
         dosage: med.dosage,
+        petId: med.petId,
+        petName: pet?.name || "Pet",
+        petColor: pet?.color || "#CC5500",
         doseKey,
         dateKey,
         time,
@@ -554,8 +633,17 @@ function getDoseEntriesForDate(medications, dateKey) {
   });
 }
 
-function getRefillEntriesForDate(medications, dateKey) {
-  return medications.filter((med) => med.refillReminderDate === dateKey);
+function getRefillEntriesForDate(medications, dateKey, pets = []) {
+  return medications
+    .filter((med) => med.refillReminderDate === dateKey)
+    .map((med) => {
+      const pet = pets.find((item) => item.id === med.petId);
+      return {
+        ...med,
+        petName: pet?.name || "Pet",
+        petColor: pet?.color || "#CC5500",
+      };
+    });
 }
 
 function shouldDoseOccurOnDate(med, dateKey) {
@@ -645,10 +733,6 @@ function emptyCalendarState(message) {
       <p class="text-stone-400 font-black">${message}</p>
     </div>
   `;
-}
-
-function getSelectedPetName() {
-  return ui.petSelector?.selectedOptions?.[0]?.textContent || "Pet";
 }
 
 function defaultDoseTime(index, count) {

@@ -72,8 +72,8 @@ export function renderPetControls(pets, selectedPetId) {
   allPetsButton.dataset.action = "select-pet";
   allPetsButton.dataset.petId = ALL_PETS_ID;
   allPetsButton.className = isAllSelected
-    ? "px-4 py-2 rounded-xl bg-[#CC5500] text-white font-black text-sm shadow-sm"
-    : "px-4 py-2 rounded-xl bg-stone-100 text-stone-500 font-black text-sm hover:bg-stone-200";
+    ? "px-4 py-2 rounded-full bg-[#CC5500] text-white font-black text-sm shadow-md"
+    : "px-4 py-2 rounded-full bg-white border border-orange-100 text-stone-600 font-black text-sm hover:bg-orange-50 shadow-sm";
   allPetsButton.textContent = "Show all pets";
   ui.petFilterBar.append(allPetsButton);
 
@@ -85,15 +85,15 @@ export function renderPetControls(pets, selectedPetId) {
     ui.petSelector.append(option);
 
     const wrapper = document.createElement("div");
-    wrapper.className = "flex items-center gap-1";
+    wrapper.className = "flex items-center gap-1.5";
 
     const filterButton = document.createElement("button");
     filterButton.type = "button";
     filterButton.dataset.action = "select-pet";
     filterButton.dataset.petId = pet.id;
     filterButton.className = pet.id === selectedPetId
-      ? "px-4 py-2 rounded-xl text-white font-black text-sm shadow-sm"
-      : "px-4 py-2 rounded-xl bg-stone-100 text-stone-500 font-black text-sm hover:bg-stone-200";
+      ? "px-4 py-2 rounded-full text-white font-black text-sm shadow-md"
+      : "px-4 py-2 rounded-full bg-white border border-orange-100 text-stone-600 font-black text-sm hover:bg-orange-50 shadow-sm";
     filterButton.style.backgroundColor = pet.id === selectedPetId ? pet.color : "";
     filterButton.textContent = pet.name;
 
@@ -101,7 +101,7 @@ export function renderPetControls(pets, selectedPetId) {
     editButton.type = "button";
     editButton.dataset.action = "edit-pet";
     editButton.dataset.petIndex = index;
-    editButton.className = "w-9 h-9 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-400 font-black text-xs";
+    editButton.className = "px-3 py-2 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-400 font-black text-xs shadow-sm";
     editButton.textContent = "Edit";
     editButton.title = `Edit ${pet.name}`;
 
@@ -128,9 +128,9 @@ export function renderTimeInputs(frequency) {
   }
 
   const weeklyPicker = frequency === "weekly" ? `
-    <div class="bg-white rounded-xl border border-stone-200 p-3">
+    <div class="bg-white rounded-2xl border border-orange-100 p-3 shadow-sm">
       <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Due every week on</label>
-      <select id="weeklyDueDay" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+      <select id="weeklyDueDay" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/70 font-bold focus:outline-none focus:border-[#CC5500]">
         <option value="0">Sunday</option>
         <option value="1">Monday</option>
         <option value="2">Tuesday</option>
@@ -143,9 +143,9 @@ export function renderTimeInputs(frequency) {
   ` : "";
 
   const monthlyPicker = frequency === "monthly" ? `
-    <div class="bg-white rounded-xl border border-stone-200 p-3">
+    <div class="bg-white rounded-2xl border border-orange-100 p-3 shadow-sm">
       <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Due every month on day</label>
-      <select id="monthlyDueDay" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+      <select id="monthlyDueDay" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/70 font-bold focus:outline-none focus:border-[#CC5500]">
         ${Array.from({ length: 31 }, (_, index) => {
           const day = index + 1;
           return `<option value="${day}" ${day === 11 ? "selected" : ""}>${day}${ordinalSuffix(day)} of every month</option>`;
@@ -156,16 +156,18 @@ export function renderTimeInputs(frequency) {
   ` : "";
 
   const timeInputs = Array.from({ length: count }, (_, index) => `
-    <div>
+    <div class="bg-white rounded-2xl border border-orange-100 p-3 shadow-sm">
       <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Dose time ${index + 1}</label>
       <input type="time" class="dose-time w-full p-3 rounded-xl border border-stone-200 bg-white text-sm focus:outline-none focus:border-[#CC5500]" required value="${defaultDoseTime(index, count)}" />
     </div>
   `).join("");
 
   ui.dynamicTimeContainer.innerHTML = `
-    ${weeklyPicker}
-    ${monthlyPicker}
-    ${timeInputs}
+    <div class="space-y-2">
+      ${weeklyPicker}
+      ${monthlyPicker}
+      ${timeInputs}
+    </div>
   `;
 }
 
@@ -175,7 +177,7 @@ export function renderMedications(medications, pets, selectedPetId) {
     ? medications
     : medications.filter((med) => med.petId === selectedPetId);
 
-  ui.medList.className = "grid sm:grid-cols-2 xl:grid-cols-3 gap-3";
+  ui.medList.className = "grid sm:grid-cols-2 xl:grid-cols-3 gap-4";
 
   if (pets.length === 0) {
     ui.medList.innerHTML = emptyState("Add a pet before making a medication plan.");
@@ -242,7 +244,7 @@ export function renderCalendar(medications, pets, selectedPetId) {
     const hasRefill = refillEntries.length > 0;
 
     return `
-      <div class="rounded-2xl border ${calendarDayClass(isToday, hasMissedOrLate, hasGiven, hasRefill)} p-2 min-h-28 sm:min-h-32 text-left overflow-hidden">
+      <div class="rounded-[1.5rem] border ${calendarDayClass(isToday, hasMissedOrLate, hasGiven, hasRefill)} p-2.5 min-h-28 sm:min-h-32 text-left overflow-hidden shadow-sm">
         <div class="flex items-center justify-between gap-2 mb-2">
           <p class="font-black text-sm ${isToday ? "text-[#CC5500]" : "text-stone-600"}">${day}</p>
           ${isToday ? '<span class="text-[9px] font-black text-[#CC5500] uppercase">Today</span>' : ""}
@@ -274,9 +276,9 @@ export function renderCalendar(medications, pets, selectedPetId) {
   }).join("");
 
   ui.calendarGrid.innerHTML = `
-    <div class="bg-white rounded-[2rem] border border-stone-100 shadow-sm p-4 space-y-4">
+    <div class="bg-white/90 backdrop-blur rounded-[2rem] border border-orange-100 shadow-lg p-4 space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <button type="button" id="calendarPrevBtn" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 font-black text-sm">Previous month</button>
+        <button type="button" id="calendarPrevBtn" class="px-4 py-2 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-600 font-black text-sm shadow-sm">Previous month</button>
 
         <div class="text-center">
           <h3 class="text-2xl font-black text-stone-800 tracking-tight">${monthTitle}</h3>
@@ -285,8 +287,8 @@ export function renderCalendar(medications, pets, selectedPetId) {
         </div>
 
         <div class="flex gap-2 justify-center">
-          <button type="button" id="calendarTodayBtn" class="px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#CC5500] font-black text-sm">Today</button>
-          <button type="button" id="calendarNextBtn" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 font-black text-sm">Next month</button>
+          <button type="button" id="calendarTodayBtn" class="px-4 py-2 rounded-full bg-orange-50 hover:bg-orange-100 border border-orange-100 text-[#CC5500] font-black text-sm shadow-sm">Today</button>
+          <button type="button" id="calendarNextBtn" class="px-4 py-2 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-600 font-black text-sm shadow-sm">Next month</button>
         </div>
       </div>
 
@@ -367,8 +369,8 @@ function ensureCalendarDetailsModal() {
   modal.className = "fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-[70] hidden items-center justify-center p-4";
   modal.innerHTML = `
     <div data-action="close-calendar-details" class="absolute inset-0"></div>
-    <div class="relative bg-white rounded-[2rem] shadow-2xl border border-stone-100 max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col">
-      <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-stone-100 bg-orange-50/50">
+    <div class="relative bg-white rounded-[2rem] shadow-2xl border border-orange-100 max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-orange-100 bg-orange-50/60">
         <div>
           <p class="text-[11px] font-black text-[#CC5500] uppercase tracking-wider">Medication History</p>
           <h3 id="calendarDetailsTitle" class="text-2xl font-black text-stone-800 leading-tight">Details</h3>
@@ -477,7 +479,7 @@ function renderCalendarPetButton(summary, dateKey) {
   ].filter(Boolean).join(" • ");
 
   return `
-    <button type="button" data-action="show-calendar-details" data-date-key="${escapeHtml(dateKey)}" data-pet-id="${escapeHtml(summary.pet.id)}" class="w-full text-left rounded-xl px-2 py-1.5 bg-white border border-stone-100 hover:border-[#CC5500]/40 hover:bg-orange-50 transition-all">
+    <button type="button" data-action="show-calendar-details" data-date-key="${escapeHtml(dateKey)}" data-pet-id="${escapeHtml(summary.pet.id)}" class="w-full text-left rounded-xl px-2 py-1.5 bg-white border border-orange-100 hover:border-[#CC5500]/40 hover:bg-orange-50 transition-all shadow-sm">
       <span class="block text-xs font-black truncate" style="color:${summary.pet.color || "#CC5500"}">${escapeHtml(summary.pet.name)}</span>
       <span class="block text-[10px] font-bold text-stone-400 truncate">${detailText || "View details"}</span>
     </button>
@@ -509,19 +511,19 @@ function renderModalDoseRow(dose) {
   }
 
   return `
-    <div class="rounded-2xl border ${statusClass} p-4">
+    <div class="rounded-2xl border ${statusClass} p-4 shadow-sm">
       <div class="grid sm:grid-cols-[1.4fr_1fr_1fr] gap-3 items-center">
         <div>
           <p class="text-base font-black leading-tight">${escapeHtml(dose.medName)}</p>
           ${dose.dosage ? `<p class="text-xs font-bold opacity-80 mt-0.5">${escapeHtml(dose.dosage)}</p>` : ""}
         </div>
 
-        <div class="bg-white/70 rounded-xl p-3 border border-white/70">
+        <div class="bg-white/80 rounded-xl p-3 border border-white/80">
           <p class="text-[10px] font-black uppercase opacity-70">Scheduled</p>
           <p class="text-sm font-black">${formatTime(dose.time)}</p>
         </div>
 
-        <div class="bg-white/70 rounded-xl p-3 border border-white/70">
+        <div class="bg-white/80 rounded-xl p-3 border border-white/80">
           <p class="text-[10px] font-black uppercase opacity-70">${wasGiven ? "Checked off at" : "Status"}</p>
           <p class="text-sm font-black">${givenText}</p>
         </div>
@@ -534,7 +536,7 @@ function renderModalDoseRow(dose) {
 
 function renderModalRefillRow(med) {
   return `
-    <div class="rounded-2xl border border-red-200 bg-red-50 p-4">
+    <div class="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
       <p class="text-[10px] font-black text-red-500 uppercase tracking-wider">Refill medication due</p>
       <p class="text-base font-black text-red-700">${escapeHtml(med.name)}</p>
       ${med.dosage ? `<p class="text-xs font-bold text-red-500 mt-0.5">${escapeHtml(med.dosage)}</p>` : ""}
@@ -550,57 +552,57 @@ function renderMedicationCard(med, pets) {
   const activeAlerts = getActiveAlerts(med, todayDoses);
 
   return `
-    <article class="bg-white rounded-2xl p-3 shadow-sm border ${activeAlerts.length ? "border-red-200" : "border-stone-100"} space-y-2">
+    <article class="bg-white/90 backdrop-blur rounded-[1.75rem] p-4 shadow-lg border ${activeAlerts.length ? "border-red-200" : "border-orange-100"} space-y-3 transition-all hover:-translate-y-0.5">
       <div class="flex justify-between gap-2 items-start">
         <div class="min-w-0">
           <p class="text-[10px] font-black uppercase tracking-wider truncate" style="color:${pet?.color ?? "#CC5500"}">${pet?.name ?? "Pet"}</p>
-          <h3 class="text-base font-black text-stone-800 leading-tight truncate">${escapeHtml(med.name)}</h3>
+          <h3 class="text-lg font-black text-stone-800 leading-tight truncate">${escapeHtml(med.name)}</h3>
           <p class="text-xs font-bold text-stone-400 leading-tight truncate">${escapeHtml(med.dosage)} • ${readableFrequency(med)}</p>
         </div>
-        <button type="button" data-action="delete-med" data-med-id="${med.id}" class="shrink-0 w-7 h-7 rounded-lg bg-stone-50 hover:bg-red-50 text-stone-400 hover:text-red-600 font-black text-xs">X</button>
+        <button type="button" data-action="delete-med" data-med-id="${med.id}" class="shrink-0 w-8 h-8 rounded-full bg-stone-50 hover:bg-red-50 border border-stone-100 text-stone-400 hover:text-red-600 font-black text-xs shadow-sm">X</button>
       </div>
 
       ${activeAlerts.length ? `
-        <div class="rounded-xl border border-red-200 bg-red-50 p-2 space-y-0.5">
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-2.5 space-y-0.5">
           ${activeAlerts.map((alert) => `<p class="text-[11px] font-black text-red-700 leading-tight">${escapeHtml(alert)}</p>`).join("")}
         </div>
       ` : ""}
 
       ${med.careAlert ? `
-        <div class="rounded-xl border border-red-200 bg-red-50 p-2">
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-2.5">
           <p class="text-[9px] font-black text-red-500 uppercase leading-tight">Care note</p>
           <p class="text-xs font-bold text-red-700 leading-snug">${escapeHtml(med.careAlert)}</p>
         </div>
       ` : ""}
 
       ${med.instructions ? `
-        <div class="rounded-xl border border-stone-100 bg-stone-50 p-2">
+        <div class="rounded-2xl border border-stone-100 bg-stone-50/80 p-2.5">
           <p class="text-[9px] font-black text-stone-400 uppercase leading-tight">Instructions</p>
           <p class="text-xs font-bold text-stone-700 leading-snug">${escapeHtml(med.instructions)}</p>
         </div>
       ` : ""}
 
       <div class="grid grid-cols-3 gap-2">
-        <div class="bg-stone-50 rounded-xl p-2 min-w-0">
+        <div class="bg-stone-50 rounded-2xl p-2.5 min-w-0 border border-stone-100">
           <p class="text-[9px] font-black text-stone-400 uppercase leading-tight">Time</p>
           <p class="text-xs font-black text-stone-700 truncate">${schedule}</p>
         </div>
-        <div class="bg-stone-50 rounded-xl p-2 min-w-0">
+        <div class="bg-stone-50 rounded-2xl p-2.5 min-w-0 border border-stone-100">
           <p class="text-[9px] font-black text-stone-400 uppercase leading-tight">Reminder</p>
           <p class="text-xs font-black text-stone-700 truncate">${reminderText(med.reminderMinutes)}</p>
         </div>
-        <div class="${refillClass} rounded-xl border p-2 min-w-0">
+        <div class="${refillClass} rounded-2xl border p-2.5 min-w-0">
           <p class="text-[9px] font-black uppercase leading-tight">Refill</p>
           <p class="text-xs font-black truncate">${formatDateShort(med.refillReminderDate)}</p>
         </div>
       </div>
 
       ${todayDoses.length ? `
-        <div class="space-y-1">
+        <div class="space-y-1.5">
           <p class="text-[9px] font-black text-stone-400 uppercase px-1 leading-tight">Today's doses</p>
           ${todayDoses.map(renderDoseCheckbox).join("")}
         </div>
-      ` : '<p class="text-xs font-bold text-stone-400 bg-stone-50 rounded-xl p-2">No doses due today.</p>'}
+      ` : '<p class="text-xs font-bold text-stone-400 bg-stone-50 rounded-2xl p-3 border border-stone-100">No doses due today.</p>'}
     </article>
   `;
 }
@@ -615,7 +617,7 @@ function renderDoseCheckbox(dose) {
   const adjustmentButton = canAdjust ? renderStatusAdjustButton(dose) : "";
 
   return `
-    <div class="rounded-xl border p-2 ${redState ? "border-red-200 bg-red-50" : greenState ? "border-emerald-200 bg-emerald-50" : "border-stone-100 bg-stone-50"}">
+    <div class="rounded-2xl border p-2.5 ${redState ? "border-red-200 bg-red-50" : greenState ? "border-emerald-200 bg-emerald-50" : "border-stone-100 bg-stone-50"}">
       <label class="flex items-start gap-2 cursor-pointer">
         <input type="checkbox" ${checked} data-action="toggle-dose" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" class="mt-0.5 w-4 h-4 accent-[#CC5500] shrink-0">
         <span class="min-w-0 flex-1">
@@ -632,7 +634,7 @@ function renderDoseCheckbox(dose) {
 function renderStatusAdjustButton(dose) {
   if (dose.status === "late") {
     return `
-      <button type="button" data-action="set-dose-status" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" data-status="on-time" class="mt-2 w-full rounded-lg bg-white/80 hover:bg-white border border-emerald-200 text-emerald-700 text-[11px] font-black py-1.5">
+      <button type="button" data-action="set-dose-status" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" data-status="on-time" class="mt-2 w-full rounded-xl bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-black py-2 shadow-sm">
         Mark as given on time
       </button>
     `;
@@ -640,7 +642,7 @@ function renderStatusAdjustButton(dose) {
 
   if (dose.status === "on-time") {
     return `
-      <button type="button" data-action="set-dose-status" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" data-status="late" class="mt-2 w-full rounded-lg bg-white/80 hover:bg-white border border-orange-200 text-orange-700 text-[11px] font-black py-1.5">
+      <button type="button" data-action="set-dose-status" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" data-status="late" class="mt-2 w-full rounded-xl bg-white hover:bg-orange-50 border border-orange-200 text-orange-700 text-[11px] font-black py-2 shadow-sm">
         Mark as given late
       </button>
     `;
@@ -782,16 +784,16 @@ function doseStatusText(status, dateKey, time) {
 }
 
 function calendarDayClass(isToday, hasMissedOrLate, hasGiven, hasRefill) {
-  if (hasRefill) return "border-red-200 bg-red-50/60";
-  if (hasMissedOrLate) return "border-red-100 bg-red-50/30";
-  if (hasGiven) return "border-emerald-200 bg-emerald-50/50";
-  if (isToday) return "border-[#CC5500] bg-orange-50";
-  return "border-stone-100 bg-stone-50/60";
+  if (hasRefill) return "border-red-200 bg-red-50/70";
+  if (hasMissedOrLate) return "border-red-100 bg-red-50/40";
+  if (hasGiven) return "border-emerald-200 bg-emerald-50/70";
+  if (isToday) return "border-[#CC5500] bg-orange-50/80";
+  return "border-orange-100 bg-white/75";
 }
 
 function emptyState(message) {
   return `
-    <div class="sm:col-span-2 xl:col-span-3 bg-white rounded-[1.5rem] border border-dashed border-stone-200 p-8 text-center">
+    <div class="sm:col-span-2 xl:col-span-3 bg-white/90 backdrop-blur rounded-[1.75rem] border border-dashed border-orange-200 p-8 text-center shadow-md">
       <p class="text-stone-400 font-black">${message}</p>
     </div>
   `;
@@ -799,7 +801,7 @@ function emptyState(message) {
 
 function emptyCalendarState(message) {
   return `
-    <div class="bg-white rounded-[2rem] border border-dashed border-stone-200 p-8 text-center">
+    <div class="bg-white/90 backdrop-blur rounded-[2rem] border border-dashed border-orange-200 p-8 text-center shadow-md">
       <p class="text-stone-400 font-black">${message}</p>
     </div>
   `;

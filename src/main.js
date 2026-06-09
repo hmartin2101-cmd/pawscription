@@ -29,6 +29,7 @@ import {
   ui,
 } from "./ui-controller.js";
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyARkLxvBodFu_wc4SrAvO03K2VwSrRqbNA",
   authDomain: "pawscription-1a81a.firebaseapp.com",
@@ -39,6 +40,7 @@ const firebaseConfig = {
   measurementId: "G-7ZX3V504S2"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);

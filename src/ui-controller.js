@@ -122,17 +122,51 @@ export function renderTimeInputs(frequency) {
 
   const count = counts[frequency] ?? 1;
 
-  if (count === 0) {
+  if (frequency === "as-needed") {
     ui.dynamicTimeContainer.innerHTML = '<p class="text-xs font-bold text-stone-400 px-1">No set dose times needed. You can still keep notes and track inventory.</p>';
     return;
   }
 
-  ui.dynamicTimeContainer.innerHTML = Array.from({ length: count }, (_, index) => `
+  const weeklyPicker = frequency === "weekly" ? `
+    <div class="bg-white rounded-xl border border-stone-200 p-3">
+      <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Due every week on</label>
+      <select id="weeklyDueDay" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+        <option value="0">Sunday</option>
+        <option value="1">Monday</option>
+        <option value="2">Tuesday</option>
+        <option value="3" selected>Wednesday</option>
+        <option value="4">Thursday</option>
+        <option value="5">Friday</option>
+        <option value="6">Saturday</option>
+      </select>
+    </div>
+  ` : "";
+
+  const monthlyPicker = frequency === "monthly" ? `
+    <div class="bg-white rounded-xl border border-stone-200 p-3">
+      <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Due every month on day</label>
+      <select id="monthlyDueDay" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+        ${Array.from({ length: 31 }, (_, index) => {
+          const day = index + 1;
+          return `<option value="${day}" ${day === 11 ? "selected" : ""}>${day}${ordinalSuffix(day)} of every month</option>`;
+        }).join("")}
+      </select>
+      <p class="text-[11px] font-bold text-stone-400 mt-2 px-1">For shorter months, dates like the 31st will only appear in months that have that date.</p>
+    </div>
+  ` : "";
+
+  const timeInputs = Array.from({ length: count }, (_, index) => `
     <div>
       <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Dose time ${index + 1}</label>
       <input type="time" class="dose-time w-full p-3 rounded-xl border border-stone-200 bg-white text-sm focus:outline-none focus:border-[#CC5500]" required value="${defaultDoseTime(index, count)}" />
     </div>
   `).join("");
+
+  ui.dynamicTimeContainer.innerHTML = `
+    ${weeklyPicker}
+    ${monthlyPicker}
+    ${timeInputs}
+  `;
 }
 
 export function renderMedications(medications, pets, selectedPetId) {
@@ -520,7 +554,7 @@ function renderMedicationCard(med, pets) {
         <div class="min-w-0">
           <p class="text-[10px] font-black uppercase tracking-wider truncate" style="color:${pet?.color ?? "#CC5500"}">${pet?.name ?? "Pet"}</p>
           <h3 class="text-base font-black text-stone-800 leading-tight truncate">${escapeHtml(med.name)}</h3>
-          <p class="text-xs font-bold text-stone-400 leading-tight truncate">${escapeHtml(med.dosage)} • ${readableFrequency(med.frequency)}</p>
+          <p class="text-xs font-bold text-stone-400 leading-tight truncate">${escapeHtml(med.dosage)} • ${readableFrequency(med)}</p>
         </div>
         <button type="button" data-action="delete-med" data-med-id="${med.id}" class="shrink-0 w-7 h-7 rounded-lg bg-stone-50 hover:bg-red-50 text-stone-400 hover:text-red-600 font-black text-xs">X</button>
       </div>
@@ -565,7 +599,7 @@ function renderMedicationCard(med, pets) {
           <p class="text-[9px] font-black text-stone-400 uppercase px-1 leading-tight">Today's doses</p>
           ${todayDoses.map(renderDoseCheckbox).join("")}
         </div>
-      ` : '<p class="text-xs font-bold text-stone-400 bg-stone-50 rounded-xl p-2">Use only when needed.</p>'}
+      ` : '<p class="text-xs font-bold text-stone-400 bg-stone-50 rounded-xl p-2">No doses due today.</p>'}
     </article>
   `;
 }
@@ -654,11 +688,19 @@ function shouldDoseOccurOnDate(med, dateKey) {
   if (date < startDate) return false;
 
   if (med.frequency === "weekly") {
-    return date.getDay() === startDate.getDay();
+    const selectedDay = Number.isInteger(Number(med.dueDayOfWeek))
+      ? Number(med.dueDayOfWeek)
+      : startDate.getDay();
+
+    return date.getDay() === selectedDay;
   }
 
   if (med.frequency === "monthly") {
-    return date.getDate() === startDate.getDate();
+    const selectedDate = Number.isInteger(Number(med.dueDayOfMonth))
+      ? Number(med.dueDayOfMonth)
+      : startDate.getDate();
+
+    return date.getDate() === selectedDate;
   }
 
   return med.frequency !== "as-needed";
@@ -741,15 +783,32 @@ function defaultDoseTime(index, count) {
   return ["08:00", "14:00", "20:00"][index];
 }
 
-function readableFrequency(frequency) {
+function readableFrequency(med) {
+  const frequency = med.frequency;
+
+  if (frequency === "weekly") {
+    const day = Number.isInteger(Number(med.dueDayOfWeek))
+      ? Number(med.dueDayOfWeek)
+      : null;
+
+    return day === null ? "Weekly" : `Every ${weekdayName(day)}`;
+  }
+
+  if (frequency === "monthly") {
+    const day = Number.isInteger(Number(med.dueDayOfMonth))
+      ? Number(med.dueDayOfMonth)
+      : null;
+
+    return day === null ? "Monthly" : `Monthly on the ${day}${ordinalSuffix(day)}`;
+  }
+
   const labels = {
     daily: "Once a day",
     "twice-daily": "Twice a day",
     "thrice-daily": "Three times a day",
-    weekly: "Once a week",
-    monthly: "Once a month",
     "as-needed": "Only when needed",
   };
+
   return labels[frequency] ?? frequency;
 }
 
@@ -806,6 +865,29 @@ function isRefillSoon(value) {
   today.setHours(0, 0, 0, 0);
   const daysAway = Math.ceil((refillDate - today) / 86400000);
   return daysAway <= 7;
+}
+
+function weekdayName(dayNumber) {
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return days[Number(dayNumber)] ?? "selected day";
+}
+
+function ordinalSuffix(day) {
+  const value = Number(day);
+  const teen = value % 100;
+
+  if (teen >= 11 && teen <= 13) return "th";
+
+  switch (value % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
 }
 
 function escapeHtml(value) {

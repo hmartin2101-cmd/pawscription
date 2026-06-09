@@ -271,6 +271,8 @@ async function handleMedicationSubmit(event) {
   }
 
   const wasViewingAllPets = state.selectedPetId === ALL_PETS_ID;
+  const weeklyDueDayInput = document.querySelector("#weeklyDueDay");
+  const monthlyDueDayInput = document.querySelector("#monthlyDueDay");
 
   const medication = {
     id: makeId("med"),
@@ -278,6 +280,8 @@ async function handleMedicationSubmit(event) {
     name: elements.medName.value.trim(),
     dosage: elements.dosage.value.trim(),
     frequency: elements.frequency.value,
+    dueDayOfWeek: elements.frequency.value === "weekly" && weeklyDueDayInput ? Number(weeklyDueDayInput.value) : null,
+    dueDayOfMonth: elements.frequency.value === "monthly" && monthlyDueDayInput ? Number(monthlyDueDayInput.value) : null,
     times: [...document.querySelectorAll(".dose-time")].map((input) => input.value).filter(Boolean),
     instructions: elements.medInstructions.value.trim(),
     reminderMinutes: Number(elements.reminderMinutes.value),
@@ -432,6 +436,14 @@ function normalizeUserData(user) {
     med.reminderMinutes ??= 15;
     med.careAlert ??= "";
     med.createdAt ??= new Date().toISOString();
+
+    if (med.frequency === "weekly" && med.dueDayOfWeek === undefined) {
+      med.dueDayOfWeek = null;
+    }
+
+    if (med.frequency === "monthly" && med.dueDayOfMonth === undefined) {
+      med.dueDayOfMonth = null;
+    }
   });
 }
 

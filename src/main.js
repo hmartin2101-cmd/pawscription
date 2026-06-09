@@ -52,12 +52,13 @@ analyticsIsSupported()
   });
 
 const DOSE_GRACE_MINUTES = 15;
+const ALL_PETS_ID = "all";
 
 const state = {
   authMode: "login",
   firebaseUser: null,
   userData: null,
-  selectedPetId: "",
+  selectedPetId: ALL_PETS_ID,
 };
 
 const elements = {
@@ -103,7 +104,7 @@ function init() {
 
     if (!firebaseUser) {
       state.userData = null;
-      state.selectedPetId = "";
+      state.selectedPetId = ALL_PETS_ID;
       showAuth();
       return;
     }
@@ -161,8 +162,10 @@ function openMedicationModal() {
     return;
   }
 
-  if (state.selectedPetId) {
+  if (state.selectedPetId && state.selectedPetId !== ALL_PETS_ID) {
     ui.petSelector.value = state.selectedPetId;
+  } else {
+    ui.petSelector.value = user.pets[0].id;
   }
 
   renderTimeInputs(elements.frequency.value);
@@ -223,7 +226,7 @@ async function createAccount(email, password) {
     pets: [firstPet],
     medications: [],
   };
-  state.selectedPetId = firstPet.id;
+  state.selectedPetId = ALL_PETS_ID;
 
   await saveCurrentUser();
   elements.authForm.reset();
@@ -255,7 +258,7 @@ async function loadUserData(uid) {
   }
 
   normalizeUserData(state.userData);
-  state.selectedPetId = state.userData.pets[0]?.id ?? "";
+  state.selectedPetId = state.userData.pets.length > 0 ? ALL_PETS_ID : "";
 }
 
 async function handleMedicationSubmit(event) {
@@ -266,6 +269,8 @@ async function handleMedicationSubmit(event) {
     alert("Add a pet before adding a medication.");
     return;
   }
+
+  const wasViewingAllPets = state.selectedPetId === ALL_PETS_ID;
 
   const medication = {
     id: makeId("med"),
@@ -284,7 +289,7 @@ async function handleMedicationSubmit(event) {
   };
 
   user.medications.push(medication);
-  state.selectedPetId = medication.petId;
+  state.selectedPetId = wasViewingAllPets ? ALL_PETS_ID : medication.petId;
 
   await saveCurrentUser();
 
@@ -309,7 +314,7 @@ async function saveNewPet() {
 
   const pet = { id: makeId("pet"), name, signalment, color };
   user.pets.push(pet);
-  state.selectedPetId = pet.id;
+  state.selectedPetId = ALL_PETS_ID;
   await saveCurrentUser();
   closePetModal();
   refreshDashboard();
@@ -407,13 +412,13 @@ function refreshDashboard() {
   normalizeUserData(user);
 
   if (!state.selectedPetId && user.pets.length > 0) {
-    state.selectedPetId = user.pets[0].id;
+    state.selectedPetId = ALL_PETS_ID;
   }
 
   showDashboard(user.ownerName);
   renderPetControls(user.pets, state.selectedPetId);
   renderMedications(user.medications, user.pets, state.selectedPetId);
-  renderCalendar(user.medications, state.selectedPetId);
+  renderCalendar(user.medications, user.pets, state.selectedPetId);
 }
 
 function normalizeUserData(user) {

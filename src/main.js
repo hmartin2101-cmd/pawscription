@@ -397,22 +397,31 @@ async function toggleDose(checkbox) {
 
   medication.doseLog ??= {};
   const doseKey = checkbox.dataset.doseKey;
+  let shouldCelebrate = false;
 
   if (checkbox.checked) {
     const givenAt = new Date();
     const [dateKey, doseTime] = doseKey.split("|");
     const dueAtWithGrace = dueDateWithGrace(dateKey, doseTime);
+    const status = givenAt <= dueAtWithGrace ? "on-time" : "late";
 
     medication.doseLog[doseKey] = {
       givenAt: givenAt.toISOString(),
-      status: givenAt <= dueAtWithGrace ? "on-time" : "late",
+      status,
       statusAdjustedManually: false,
     };
+
+    shouldCelebrate = status === "on-time";
   } else {
     delete medication.doseLog[doseKey];
   }
 
   await saveCurrentUser();
+
+  if (shouldCelebrate) {
+    launchPawConfetti();
+  }
+
   refreshDashboard();
 }
 
@@ -439,6 +448,11 @@ async function setDoseStatus(button) {
   };
 
   await saveCurrentUser();
+
+  if (newStatus === "on-time") {
+    launchPawConfetti();
+  }
+
   refreshDashboard();
 }
 
@@ -493,6 +507,141 @@ async function saveCurrentUser() {
     ...state.userData,
     updatedAt: serverTimestamp(),
   }, { merge: true });
+}
+
+function launchPawConfetti() {
+  ensureConfettiStyles();
+
+  const confettiLayer = document.createElement("div");
+  confettiLayer.className = "paw-confetti-layer";
+  document.body.append(confettiLayer);
+
+  const pieces = ["🐾", "✨", "💚", "🧡", "★", "✦"];
+  const colors = ["#CC5500", "#7BAE7F", "#F7B267", "#F79D65", "#8FC0A9", "#F4A261"];
+
+  for (let index = 0; index < 34; index++) {
+    const piece = document.createElement("span");
+    const isEmoji = index % 3 === 0;
+    const symbol = pieces[Math.floor(Math.random() * pieces.length)];
+    const startX = 50 + (Math.random() * 16 - 8);
+    const driftX = Math.random() * 220 - 110;
+    const fallDistance = 260 + Math.random() * 220;
+    const size = isEmoji ? 18 + Math.random() * 12 : 10 + Math.random() * 10;
+    const duration = 950 + Math.random() * 650;
+    const delay = Math.random() * 120;
+
+    piece.className = "paw-confetti-piece";
+    piece.textContent = symbol;
+    piece.style.left = `${startX}%`;
+    piece.style.top = "42%";
+    piece.style.fontSize = `${size}px`;
+    piece.style.color = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.setProperty("--drift-x", `${driftX}px`);
+    piece.style.setProperty("--fall-y", `${fallDistance}px`);
+    piece.style.setProperty("--spin", `${Math.random() * 720 - 360}deg`);
+    piece.style.animationDuration = `${duration}ms`;
+    piece.style.animationDelay = `${delay}ms`;
+
+    confettiLayer.append(piece);
+  }
+
+  const message = document.createElement("div");
+  message.className = "paw-confetti-message";
+  message.textContent = "Dose done on time! 🐾";
+  confettiLayer.append(message);
+
+  window.setTimeout(() => {
+    confettiLayer.remove();
+  }, 1900);
+}
+
+function ensureConfettiStyles() {
+  if (document.querySelector("#pawConfettiStyles")) return;
+
+  const style = document.createElement("style");
+  style.id = "pawConfettiStyles";
+  style.textContent = `
+    .paw-confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    .paw-confetti-piece {
+      position: absolute;
+      display: inline-block;
+      font-weight: 900;
+      line-height: 1;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+      animation-name: pawConfettiBurst;
+      animation-timing-function: cubic-bezier(.18,.8,.28,1);
+      animation-fill-mode: forwards;
+      text-shadow: 0 3px 10px rgba(120, 80, 40, 0.12);
+    }
+
+    .paw-confetti-message {
+      position: absolute;
+      left: 50%;
+      top: 38%;
+      transform: translate(-50%, -50%) scale(0.92);
+      background: rgba(255, 255, 255, 0.92);
+      color: #CC5500;
+      border: 1px solid rgba(204, 85, 0, 0.16);
+      box-shadow: 0 18px 45px rgba(120, 80, 40, 0.18);
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 900;
+      animation: pawConfettiMessage 1500ms ease forwards;
+      backdrop-filter: blur(10px);
+    }
+
+    @keyframes pawConfettiBurst {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.7) rotate(0deg);
+      }
+
+      12% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(
+          calc(-50% + var(--drift-x)),
+          calc(-50% + var(--fall-y))
+        ) scale(1.05) rotate(var(--spin));
+      }
+    }
+
+    @keyframes pawConfettiMessage {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.86);
+      }
+
+      18% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      78% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -68%) scale(0.96);
+      }
+    }
+  `;
+
+  document.head.append(style);
 }
 
 function setAuthBusy(isBusy) {

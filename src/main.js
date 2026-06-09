@@ -28,14 +28,7 @@ import {
   showDashboard,
   ui,
 } from "./ui-controller.js";
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyARkLxvBodFu_wc4SrAvO03K2VwSrRqbNA",
   authDomain: "pawscription-1a81a.firebaseapp.com",
@@ -46,16 +39,17 @@ const firebaseConfig = {
   measurementId: "G-7ZX3V504S2"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-analyticsIsSupported().then((supported) => {
-  if (supported) getAnalytics(app);
-});
+analyticsIsSupported()
+  .then((supported) => {
+    if (supported) getAnalytics(app);
+  })
+  .catch(() => {
+    // Analytics is optional. Authentication and Firestore can still work without it.
+  });
 
 const DOSE_GRACE_MINUTES = 15;
 

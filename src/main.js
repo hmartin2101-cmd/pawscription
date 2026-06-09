@@ -29,7 +29,6 @@ import {
   ui,
 } from "./ui-controller.js";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyARkLxvBodFu_wc4SrAvO03K2VwSrRqbNA",
   authDomain: "pawscription-1a81a.firebaseapp.com",
@@ -40,7 +39,6 @@ const firebaseConfig = {
   measurementId: "G-7ZX3V504S2"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -71,6 +69,10 @@ const elements = {
   regSignalment: document.querySelector("#regSignalment"),
   regPetColor: document.querySelector("#regPetColor"),
   regOwnerName: document.querySelector("#regOwnerName"),
+  medicationModal: document.querySelector("#medicationModal"),
+  addMedicationBtn: document.querySelector("#addMedicationBtn"),
+  closeMedicationModalBtn: document.querySelector("#closeMedicationModalBtn"),
+  cancelMedicationModalBtn: document.querySelector("#cancelMedicationModalBtn"),
   medForm: document.querySelector("#medForm"),
   medName: document.querySelector("#medName"),
   dosage: document.querySelector("#dosage"),
@@ -120,6 +122,22 @@ function bindEvents() {
   elements.frequency.addEventListener("change", () => renderTimeInputs(elements.frequency.value));
   elements.medForm.addEventListener("submit", handleMedicationSubmit);
 
+  elements.addMedicationBtn.addEventListener("click", openMedicationModal);
+  elements.closeMedicationModalBtn.addEventListener("click", closeMedicationModal);
+  elements.cancelMedicationModalBtn.addEventListener("click", closeMedicationModal);
+
+  elements.medicationModal.addEventListener("click", (event) => {
+    if (event.target === elements.medicationModal) {
+      closeMedicationModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeMedicationModal();
+    }
+  });
+
   elements.addPetBtn.addEventListener("click", openPetModal);
   elements.closePetModalBtn.addEventListener("click", closePetModal);
   elements.savePetModalBtn.addEventListener("click", saveNewPet);
@@ -133,6 +151,29 @@ function bindEvents() {
 function switchAuthMode(mode) {
   state.authMode = mode;
   setAuthMode(mode);
+}
+
+function openMedicationModal() {
+  const user = currentUser();
+
+  if (!user || user.pets.length === 0) {
+    alert("Add a pet before adding a medication.");
+    return;
+  }
+
+  if (state.selectedPetId) {
+    ui.petSelector.value = state.selectedPetId;
+  }
+
+  renderTimeInputs(elements.frequency.value);
+
+  elements.medicationModal.classList.remove("hidden");
+  elements.medicationModal.classList.add("flex");
+}
+
+function closeMedicationModal() {
+  elements.medicationModal.classList.add("hidden");
+  elements.medicationModal.classList.remove("flex");
 }
 
 async function handleAuthSubmit(event) {
@@ -244,9 +285,12 @@ async function handleMedicationSubmit(event) {
 
   user.medications.push(medication);
   state.selectedPetId = medication.petId;
+
   await saveCurrentUser();
+
   elements.medForm.reset();
   renderTimeInputs(elements.frequency.value);
+  closeMedicationModal();
   refreshDashboard();
 }
 

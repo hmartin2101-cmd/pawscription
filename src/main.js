@@ -369,6 +369,12 @@ async function handleMedicationAction(event) {
     return;
   }
 
+  const statusButton = event.target.closest("[data-action='set-dose-status']");
+  if (statusButton) {
+    await setDoseStatus(statusButton);
+    return;
+  }
+
   const deleteButton = event.target.closest("[data-action='delete-med']");
   if (!deleteButton) return;
 
@@ -400,10 +406,37 @@ async function toggleDose(checkbox) {
     medication.doseLog[doseKey] = {
       givenAt: givenAt.toISOString(),
       status: givenAt <= dueAtWithGrace ? "on-time" : "late",
+      statusAdjustedManually: false,
     };
   } else {
     delete medication.doseLog[doseKey];
   }
+
+  await saveCurrentUser();
+  refreshDashboard();
+}
+
+async function setDoseStatus(button) {
+  const user = currentUser();
+  const medication = user.medications.find((med) => med.id === button.dataset.medId);
+  if (!medication) return;
+
+  const doseKey = button.dataset.doseKey;
+  const newStatus = button.dataset.status;
+
+  medication.doseLog ??= {};
+
+  if (!medication.doseLog[doseKey]?.givenAt) {
+    alert("This dose has not been checked off yet.");
+    return;
+  }
+
+  medication.doseLog[doseKey] = {
+    ...medication.doseLog[doseKey],
+    status: newStatus,
+    statusAdjustedManually: true,
+    statusAdjustedAt: new Date().toISOString(),
+  };
 
   await saveCurrentUser();
   refreshDashboard();

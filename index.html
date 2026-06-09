@@ -79,7 +79,7 @@
         <p class="text-sm font-bold text-stone-400 mt-0.5">Keep today's medications calm, clear, and checked off.</p>
       </div>
       <div class="flex gap-2">
-        <button id="addPetBtn" class="bg-[#CC5500] hover:bg-[#b34a00] text-white font-black px-5 py-3 rounded-xl shadow-sm text-sm transition-all">Add pet</button>
+        <button id="addPetBtn" class="bg-stone-100 hover:bg-stone-200 text-stone-600 font-black px-5 py-3 rounded-xl shadow-sm text-sm transition-all">Add pet</button>
         <button id="logoutBtn" class="bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold px-5 py-3 rounded-xl text-sm transition-all">Log out</button>
       </div>
     </div>
@@ -89,79 +89,108 @@
       <div id="petFilterBar" class="flex flex-wrap gap-2"></div>
     </div>
 
-    <div class="grid lg:grid-cols-3 gap-8 items-start">
-      <div class="space-y-6">
-        <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-stone-100 space-y-4">
-          <h2 class="text-2xl font-black text-[#CC5500] tracking-tight">Add a Medication</h2>
-          <form id="medForm" class="space-y-3.5">
-            <div>
-              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Pet</label>
-              <select id="petSelector" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]"></select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Medication name</label>
-                <input id="medName" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Dose</label>
-                <input id="dosage" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" placeholder="e.g., 1 pill" />
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">How often?</label>
-              <select id="frequency" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
-                <option value="daily">Once a day</option>
-                <option value="twice-daily">Twice a day</option>
-                <option value="thrice-daily">Three times a day</option>
-                <option value="weekly">Once a week</option>
-                <option value="monthly">Once a month</option>
-                <option value="as-needed">Only when needed</option>
-              </select>
-            </div>
-            <div id="dynamicTimeContainer" class="bg-stone-50 p-3 rounded-xl border border-stone-100 space-y-2"></div>
-            <div>
-              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Medication instructions</label>
-              <textarea id="medInstructions" rows="3" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" placeholder="Example: Give with breakfast, hide in a treat, or avoid giving with other meds."></textarea>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">When should Pawscription remind you?</label>
-              <select id="reminderMinutes" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
-                <option value="0">Right at dose time</option>
-                <option value="5">5 minutes before</option>
-                <option value="15" selected>15 minutes before</option>
-                <option value="30">30 minutes before</option>
-                <option value="60">1 hour before</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-red-500 mb-1 px-1">Important care alert</label>
-              <textarea id="careAlert" rows="3" class="w-full p-3 rounded-xl border border-red-100 bg-red-50/60 text-sm focus:outline-none focus:border-red-400" placeholder="Example: Give with food. Call the vet if vomiting starts."></textarea>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">How many do you have?</label>
-                <input id="totalStock" type="number" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Refill by</label>
-                <input id="refillReminderDate" type="date" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
-              </div>
-            </div>
-            <button type="submit" class="w-full bg-[#CC5500] text-white font-black py-3.5 rounded-xl shadow-sm hover:bg-[#b34a00] transition-all">Save medication plan</button>
-          </form>
+    <div class="space-y-8">
+      <section>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 px-1">
+          <div>
+            <h2 class="text-2xl font-black text-stone-800 tracking-tight">Treatment Plan</h2>
+            <p class="text-sm font-bold text-stone-400">View and check off today’s medication schedule.</p>
+          </div>
+          <button id="addMedicationBtn" type="button" class="bg-[#CC5500] hover:bg-[#b34a00] text-white font-black px-5 py-3 rounded-xl shadow-sm text-sm transition-all">
+            Add new medication
+          </button>
         </div>
+
+        <div id="medList" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+      </section>
+
+      <section class="bg-white rounded-[2rem] p-6 shadow-sm border border-stone-100">
+        <h2 class="text-2xl font-black text-stone-800 tracking-tight mb-4">Monthly Dose History</h2>
+        <div id="calendarGrid" class="space-y-4"></div>
+      </section>
+    </div>
+  </div>
+
+  <div id="medicationModal" class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-[2rem] shadow-2xl border border-stone-100 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-stone-100 bg-orange-50/50">
+        <div>
+          <p class="text-[11px] font-black text-[#CC5500] uppercase tracking-wider">Treatment plan</p>
+          <h3 class="text-2xl font-black text-stone-800 leading-tight">Add Medication</h3>
+          <p class="text-sm font-bold text-stone-400">Create a medication plan for your pet.</p>
+        </div>
+        <button id="closeMedicationModalBtn" type="button" class="shrink-0 w-10 h-10 rounded-xl bg-white hover:bg-stone-100 text-stone-500 font-black border border-stone-100">X</button>
       </div>
 
-      <div class="lg:col-span-2 space-y-8">
-        <div>
-          <h2 class="text-2xl font-black text-stone-800 tracking-tight mb-4 px-1">Today's Medication Plans</h2>
-          <div id="medList" class="grid md:grid-cols-2 gap-6"></div>
-        </div>
-        <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-stone-100">
-          <h2 class="text-2xl font-black text-stone-800 tracking-tight mb-4">Monthly Dose History</h2>
-          <div id="calendarGrid" class="grid grid-cols-7 gap-2.5 text-center text-xs font-bold"></div>
-        </div>
+      <div class="p-6 overflow-y-auto">
+        <form id="medForm" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Pet</label>
+            <select id="petSelector" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]"></select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Medication name</label>
+              <input id="medName" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Dose</label>
+              <input id="dosage" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" placeholder="e.g., 1 pill" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-stone-500 mb-1 px-1">How often?</label>
+            <select id="frequency" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+              <option value="daily">Once a day</option>
+              <option value="twice-daily">Twice a day</option>
+              <option value="thrice-daily">Three times a day</option>
+              <option value="weekly">Once a week</option>
+              <option value="monthly">Once a month</option>
+              <option value="as-needed">Only when needed</option>
+            </select>
+          </div>
+
+          <div id="dynamicTimeContainer" class="bg-stone-50 p-3 rounded-xl border border-stone-100 space-y-2"></div>
+
+          <div>
+            <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Medication instructions</label>
+            <textarea id="medInstructions" rows="3" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" placeholder="Example: Give with breakfast, hide in a treat, or avoid giving with other meds."></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-stone-500 mb-1 px-1">When should Pawscription remind you?</label>
+            <select id="reminderMinutes" class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 font-bold focus:outline-none focus:border-[#CC5500]">
+              <option value="0">Right at dose time</option>
+              <option value="5">5 minutes before</option>
+              <option value="15" selected>15 minutes before</option>
+              <option value="30">30 minutes before</option>
+              <option value="60">1 hour before</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-red-500 mb-1 px-1">Important care alert</label>
+            <textarea id="careAlert" rows="3" class="w-full p-3 rounded-xl border border-red-100 bg-red-50/60 text-sm focus:outline-none focus:border-red-400" placeholder="Example: Give with food. Call the vet if vomiting starts."></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">How many do you have?</label>
+              <input id="totalStock" type="number" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-500 mb-1 px-1">Refill by</label>
+              <input id="refillReminderDate" type="date" required class="w-full p-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm focus:outline-none focus:border-[#CC5500]" />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2 pt-3">
+            <button type="submit" class="w-full bg-[#CC5500] text-white font-black py-3.5 rounded-xl shadow-sm hover:bg-[#b34a00] transition-all">Save medication plan</button>
+            <button type="button" id="cancelMedicationModalBtn" class="w-full sm:w-auto bg-stone-100 hover:bg-stone-200 text-stone-600 font-black px-5 py-3.5 rounded-xl transition-all">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

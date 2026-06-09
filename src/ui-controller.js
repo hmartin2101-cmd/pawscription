@@ -4,10 +4,11 @@ const DOSE_GRACE_MINUTES = 15;
 
 const calendarState = {
   viewDate: new Date(),
-  openDateKey: "",
   lastMedications: [],
   lastSelectedPetId: "",
 };
+
+let calendarModalReady = false;
 
 export const ui = {
   authPortal: $("#authPortal"),
@@ -139,6 +140,8 @@ export function renderMedications(medications, pets, selectedPetId) {
 }
 
 export function renderCalendar(medications, selectedPetId) {
+  ensureCalendarDetailsModal();
+
   calendarState.lastMedications = medications;
   calendarState.lastSelectedPetId = selectedPetId;
   ui.calendarGrid.className = "space-y-4";
@@ -158,7 +161,7 @@ export function renderCalendar(medications, selectedPetId) {
   const monthTitle = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(firstDay);
 
   const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    .map((day) => `<div class="text-center text-[10px] font-black text-stone-400 uppercase tracking-wider">${day}</div>`)
+    .map((day) => `<div class="text-center text-[10px] font-black text-stone-400 uppercase tracking-wider hidden sm:block">${day}</div>`)
     .join("");
 
   const blanks = Array.from({ length: firstWeekday }, () => '<div class="hidden sm:block min-h-28 rounded-2xl"></div>').join("");
@@ -172,7 +175,6 @@ export function renderCalendar(medications, selectedPetId) {
     const doseEntries = getDoseEntriesForDate(petMeds, dateKey);
     const refillEntries = getRefillEntriesForDate(petMeds, dateKey);
     const hasSomethingToShow = doseEntries.length > 0 || refillEntries.length > 0;
-    const isOpen = calendarState.openDateKey === dateKey;
     const hasMissedOrLate = doseEntries.some((dose) => dose.status === "missed" || dose.status === "late");
     const hasGiven = doseEntries.some((dose) => dose.log?.givenAt);
 
@@ -186,7 +188,7 @@ export function renderCalendar(medications, selectedPetId) {
         ${hasSomethingToShow ? `
           <button type="button" data-action="show-calendar-details" data-date-key="${dateKey}" class="w-full text-left rounded-xl px-2 py-1.5 bg-white border border-stone-100 hover:border-[#CC5500]/40 hover:bg-orange-50 transition-all">
             <span class="block text-xs font-black text-stone-800 truncate">${escapeHtml(petName)}</span>
-            <span class="block text-[10px] font-bold text-stone-400 truncate">Click for med details</span>
+            <span class="block text-[10px] font-bold text-stone-400 truncate">View medication details</span>
           </button>
         ` : '<p class="text-[10px] font-bold text-stone-300 mt-3">No tracked meds</p>'}
 
@@ -196,8 +198,6 @@ export function renderCalendar(medications, selectedPetId) {
             <p class="text-[10px] font-bold text-red-500 leading-tight truncate">${refillEntries.map((med) => escapeHtml(med.name)).join(", ")}</p>
           </div>
         ` : ""}
-
-        ${isOpen ? renderCalendarDetails(dateKey, doseEntries, refillEntries) : ""}
       </div>
     `;
   }).join("");
@@ -252,18 +252,21 @@ export function closeEditPetModal() {
 
 function bindCalendarEvents() {
   $("#calendarPrevBtn")?.addEventListener("click", () => moveCalendarMonth(-1));
+
   $("#calendarNextBtn")?.addEventListener("click", () => moveCalendarMonth(1));
+
   $("#calendarTodayBtn")?.addEventListener("click", () => {
     calendarState.viewDate = new Date();
-    calendarState.openDateKey = "";
     renderCalendar(calendarState.lastMedications, calendarState.lastSelectedPetId);
   });
 
   ui.calendarGrid.querySelectorAll("[data-action='show-calendar-details']").forEach((button) => {
     button.addEventListener("click", () => {
       const dateKey = button.dataset.dateKey;
-      calendarState.openDateKey = calendarState.openDateKey === dateKey ? "" : dateKey;
-      renderCalendar(calendarState.lastMedications, calendarState.lastSelectedPetId);
+      const petMeds = calendarState.lastMedications.filter((med) => med.petId === calendarState.lastSelectedPetId);
+      const doseEntries = getDoseEntriesForDate(petMeds, dateKey);
+      const refillEntries = getRefillEntriesForDate(petMeds, dateKey);
+      showCalendarDetailsModal(dateKey, doseEntries, refillEntries, getSelectedPetName());
     });
   });
 }
@@ -274,8 +277,176 @@ function moveCalendarMonth(amount) {
     calendarState.viewDate.getMonth() + amount,
     1
   );
-  calendarState.openDateKey = "";
+
   renderCalendar(calendarState.lastMedications, calendarState.lastSelectedPetId);
+}
+
+function ensureCalendarDetailsModal() {
+  if ($("#calendarDetailsModal")) return;
+
+  const modal = document.createElement("div");
+  modal.id = "calendarDetailsModal";
+  modal.className = "fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-[70] hidden items-center justify-center p-4";
+  modal.innerHTML = `
+    <div data-action="close-calendar-details" class="absolute inset-0"></div>
+    <div class="relative bg-white rounded-[2rem] shadow-2xl border border-stone-100 max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-stone-100 bg-orange-50/50">
+        <div>
+          <p class="text-[11px] font-black text-[#CC5500] uppercase tracking-wider">Medication History</p>
+          <h3 id="calendarDetailsTitle" class="text-2xl font-black text-stone-800 leading-tight">Details</h3>
+          <p id="calendarDetailsSubtitle" class="text-sm font-bold text-stone-400"></p>
+        </div>
+        <button type="button" data-action="close-calendar-details" class="shrink-0 w-10 h-10 rounded-xl bg-white hover:bg-stone-100 text-stone-500 font-black border border-stone-100">X</button>
+      </div>
+
+      <div id="calendarDetailsContent" class="p-6 overflow-y-auto space-y-4"></div>
+    </div>
+  `;
+
+  document.body.append(modal);
+
+  if (!calendarModalReady) {
+    calendarModalReady = true;
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("[data-action='close-calendar-details']")) {
+        closeCalendarDetailsModal();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeCalendarDetailsModal();
+      }
+    });
+  }
+}
+
+function showCalendarDetailsModal(dateKey, doseEntries, refillEntries, petName) {
+  ensureCalendarDetailsModal();
+
+  const modal = $("#calendarDetailsModal");
+  const title = $("#calendarDetailsTitle");
+  const subtitle = $("#calendarDetailsSubtitle");
+  const content = $("#calendarDetailsContent");
+
+  const givenCount = doseEntries.filter((dose) => dose.log?.givenAt).length;
+  const missedCount = doseEntries.filter((dose) => dose.status === "missed").length;
+  const lateCount = doseEntries.filter((dose) => dose.status === "late").length;
+
+  title.textContent = petName;
+  subtitle.textContent = formatLongDate(dateKey);
+
+  content.innerHTML = `
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="rounded-2xl bg-stone-50 border border-stone-100 p-3">
+        <p class="text-[10px] font-black text-stone-400 uppercase">Scheduled</p>
+        <p class="text-2xl font-black text-stone-800">${doseEntries.length}</p>
+      </div>
+      <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-3">
+        <p class="text-[10px] font-black text-emerald-600 uppercase">Given</p>
+        <p class="text-2xl font-black text-emerald-700">${givenCount}</p>
+      </div>
+      <div class="rounded-2xl bg-orange-50 border border-orange-100 p-3">
+        <p class="text-[10px] font-black text-orange-600 uppercase">Late</p>
+        <p class="text-2xl font-black text-orange-700">${lateCount}</p>
+      </div>
+      <div class="rounded-2xl bg-red-50 border border-red-100 p-3">
+        <p class="text-[10px] font-black text-red-600 uppercase">Missed</p>
+        <p class="text-2xl font-black text-red-700">${missedCount}</p>
+      </div>
+    </div>
+
+    <div>
+      <h4 class="text-lg font-black text-stone-800 mb-2">Medication doses</h4>
+      ${
+        doseEntries.length
+          ? `<div class="space-y-2">${doseEntries.map(renderModalDoseRow).join("")}</div>`
+          : '<div class="rounded-2xl bg-stone-50 border border-stone-100 p-4"><p class="text-sm font-bold text-stone-400">No medication doses were scheduled for this date.</p></div>'
+      }
+    </div>
+
+    ${
+      refillEntries.length
+        ? `
+          <div>
+            <h4 class="text-lg font-black text-stone-800 mb-2">Refill reminders</h4>
+            <div class="space-y-2">
+              ${refillEntries.map(renderModalRefillRow).join("")}
+            </div>
+          </div>
+        `
+        : ""
+    }
+  `;
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function closeCalendarDetailsModal() {
+  const modal = $("#calendarDetailsModal");
+  if (!modal) return;
+
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+
+function renderModalDoseRow(dose) {
+  const wasGiven = Boolean(dose.log?.givenAt);
+
+  let statusLabel = "Upcoming";
+  let statusClass = "bg-stone-50 border-stone-100 text-stone-600";
+  let givenText = "Not given yet";
+
+  if (wasGiven) {
+    givenText = formatTimeFromDate(dose.log.givenAt);
+
+    if (dose.status === "late") {
+      statusLabel = "Given late";
+      statusClass = "bg-orange-50 border-orange-100 text-orange-700";
+    } else {
+      statusLabel = "Given on time";
+      statusClass = "bg-emerald-50 border-emerald-100 text-emerald-700";
+    }
+  } else if (dose.status === "missed") {
+    statusLabel = "Missed";
+    statusClass = "bg-red-50 border-red-100 text-red-700";
+    givenText = "Not marked as given";
+  }
+
+  return `
+    <div class="rounded-2xl border ${statusClass} p-4">
+      <div class="grid sm:grid-cols-[1.4fr_1fr_1fr] gap-3 items-center">
+        <div>
+          <p class="text-base font-black leading-tight">${escapeHtml(dose.medName)}</p>
+          ${dose.dosage ? `<p class="text-xs font-bold opacity-80 mt-0.5">${escapeHtml(dose.dosage)}</p>` : ""}
+        </div>
+
+        <div class="bg-white/70 rounded-xl p-3 border border-white/70">
+          <p class="text-[10px] font-black uppercase opacity-70">Scheduled</p>
+          <p class="text-sm font-black">${formatTime(dose.time)}</p>
+        </div>
+
+        <div class="bg-white/70 rounded-xl p-3 border border-white/70">
+          <p class="text-[10px] font-black uppercase opacity-70">${wasGiven ? "Given at" : "Status"}</p>
+          <p class="text-sm font-black">${givenText}</p>
+        </div>
+      </div>
+
+      <p class="mt-3 text-xs font-black uppercase tracking-wider">${statusLabel}</p>
+    </div>
+  `;
+}
+
+function renderModalRefillRow(med) {
+  return `
+    <div class="rounded-2xl border border-red-200 bg-red-50 p-4">
+      <p class="text-[10px] font-black text-red-500 uppercase tracking-wider">Refill medication due</p>
+      <p class="text-base font-black text-red-700">${escapeHtml(med.name)}</p>
+      ${med.dosage ? `<p class="text-xs font-bold text-red-500 mt-0.5">${escapeHtml(med.dosage)}</p>` : ""}
+    </div>
+  `;
 }
 
 function renderMedicationCard(med, pets) {
@@ -358,55 +529,6 @@ function renderDoseCheckbox(dose) {
   `;
 }
 
-function renderCalendarDetails(dateKey, doseEntries, refillEntries) {
-  const readableDate = formatLongDate(dateKey);
-  const doseLines = doseEntries.length
-    ? doseEntries.map((dose) => renderCalendarDoseDetail(dose)).join("")
-    : '<p class="text-xs font-bold text-stone-400">No medication doses were scheduled for this date.</p>';
-
-  const refillLines = refillEntries.length
-    ? refillEntries.map((med) => `
-      <div class="rounded-xl border border-red-200 bg-red-50 p-2">
-        <p class="text-[10px] font-black text-red-500 uppercase">Refill medication due</p>
-        <p class="text-xs font-black text-red-700">${escapeHtml(med.name)}</p>
-      </div>
-    `).join("")
-    : "";
-
-  return `
-    <div class="mt-2 rounded-xl border border-stone-200 bg-white p-2 space-y-2 shadow-sm">
-      <p class="text-[10px] font-black text-stone-400 uppercase tracking-wider">Details for ${readableDate}</p>
-      <div class="space-y-1.5">${doseLines}</div>
-      ${refillLines ? `<div class="space-y-1.5 pt-1 border-t border-stone-100">${refillLines}</div>` : ""}
-    </div>
-  `;
-}
-
-function renderCalendarDoseDetail(dose) {
-  const wasGiven = Boolean(dose.log?.givenAt);
-  const statusClass = wasGiven
-    ? dose.status === "late"
-      ? "border-orange-200 bg-orange-50 text-orange-700"
-      : "border-emerald-200 bg-emerald-50 text-emerald-700"
-    : dose.status === "missed"
-      ? "border-red-200 bg-red-50 text-red-700"
-      : "border-stone-200 bg-stone-50 text-stone-600";
-
-  const statusText = wasGiven
-    ? `Given at ${formatDateTime(dose.log.givenAt)}`
-    : dose.status === "missed"
-      ? "Not marked as given"
-      : `Due at ${formatTime(dose.time)}`;
-
-  return `
-    <div class="rounded-xl border p-2 ${statusClass}">
-      <p class="text-xs font-black leading-tight">${escapeHtml(dose.medName)}</p>
-      <p class="text-[11px] font-bold leading-tight">Scheduled: ${formatTime(dose.time)}</p>
-      <p class="text-[11px] font-bold leading-tight">${statusText}</p>
-    </div>
-  `;
-}
-
 function getDoseEntriesForDate(medications, dateKey) {
   return medications.flatMap((med) => {
     if (!med.times?.length) return [];
@@ -420,6 +542,7 @@ function getDoseEntriesForDate(medications, dateKey) {
       return {
         medId: med.id,
         medName: med.name,
+        dosage: med.dosage,
         doseKey,
         dateKey,
         time,
@@ -564,6 +687,10 @@ function formatLongDate(dateKey) {
 
 function formatDateTime(value) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
+}
+
+function formatTimeFromDate(value) {
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(value));
 }
 
 function formatTime(value) {

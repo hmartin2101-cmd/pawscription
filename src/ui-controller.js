@@ -486,6 +486,7 @@ function renderCalendarPetButton(summary, dateKey) {
 
 function renderModalDoseRow(dose) {
   const wasGiven = Boolean(dose.log?.givenAt);
+  const wasAdjusted = Boolean(dose.log?.statusAdjustedManually);
 
   let statusLabel = "Upcoming";
   let statusClass = "bg-stone-50 border-stone-100 text-stone-600";
@@ -495,10 +496,10 @@ function renderModalDoseRow(dose) {
     givenText = formatTimeFromDate(dose.log.givenAt);
 
     if (dose.status === "late") {
-      statusLabel = "Given late";
+      statusLabel = wasAdjusted ? "Manually marked late" : "Given late";
       statusClass = "bg-orange-50 border-orange-100 text-orange-700";
     } else {
-      statusLabel = "Given on time";
+      statusLabel = wasAdjusted ? "Manually marked on time" : "Given on time";
       statusClass = "bg-emerald-50 border-emerald-100 text-emerald-700";
     }
   } else if (dose.status === "missed") {
@@ -521,7 +522,7 @@ function renderModalDoseRow(dose) {
         </div>
 
         <div class="bg-white/70 rounded-xl p-3 border border-white/70">
-          <p class="text-[10px] font-black uppercase opacity-70">${wasGiven ? "Given at" : "Status"}</p>
+          <p class="text-[10px] font-black uppercase opacity-70">${wasGiven ? "Checked off at" : "Status"}</p>
           <p class="text-sm font-black">${givenText}</p>
         </div>
       </div>
@@ -606,19 +607,46 @@ function renderMedicationCard(med, pets) {
 
 function renderDoseCheckbox(dose) {
   const checked = dose.log?.givenAt ? "checked" : "";
-  const givenAt = dose.log?.givenAt ? `Given ${formatDateTime(dose.log.givenAt)}` : dose.statusText;
+  const givenAt = dose.log?.givenAt ? `Checked off ${formatDateTime(dose.log.givenAt)}` : dose.statusText;
   const redState = dose.status === "missed" || dose.status === "late";
   const greenState = dose.status === "on-time";
+  const wasAdjusted = Boolean(dose.log?.statusAdjustedManually);
+  const canAdjust = Boolean(dose.log?.givenAt);
+  const adjustmentButton = canAdjust ? renderStatusAdjustButton(dose) : "";
 
   return `
-    <label class="flex items-start gap-2 rounded-xl border p-2 cursor-pointer ${redState ? "border-red-200 bg-red-50" : greenState ? "border-emerald-200 bg-emerald-50" : "border-stone-100 bg-stone-50"}">
-      <input type="checkbox" ${checked} data-action="toggle-dose" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" class="mt-0.5 w-4 h-4 accent-[#CC5500] shrink-0">
-      <span class="min-w-0">
-        <span class="block text-xs font-black leading-tight ${redState ? "text-red-700" : greenState ? "text-emerald-700" : "text-stone-700"}">${formatTime(dose.time)} dose</span>
-        <span class="block text-[11px] font-bold leading-tight ${redState ? "text-red-500" : greenState ? "text-emerald-600" : "text-stone-400"}">${givenAt}</span>
-      </span>
-    </label>
+    <div class="rounded-xl border p-2 ${redState ? "border-red-200 bg-red-50" : greenState ? "border-emerald-200 bg-emerald-50" : "border-stone-100 bg-stone-50"}">
+      <label class="flex items-start gap-2 cursor-pointer">
+        <input type="checkbox" ${checked} data-action="toggle-dose" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" class="mt-0.5 w-4 h-4 accent-[#CC5500] shrink-0">
+        <span class="min-w-0 flex-1">
+          <span class="block text-xs font-black leading-tight ${redState ? "text-red-700" : greenState ? "text-emerald-700" : "text-stone-700"}">${formatTime(dose.time)} dose</span>
+          <span class="block text-[11px] font-bold leading-tight ${redState ? "text-red-500" : greenState ? "text-emerald-600" : "text-stone-400"}">${givenAt}</span>
+          ${wasAdjusted ? '<span class="block text-[10px] font-black text-stone-400 mt-0.5">Status adjusted manually</span>' : ""}
+        </span>
+      </label>
+      ${adjustmentButton}
+    </div>
   `;
+}
+
+function renderStatusAdjustButton(dose) {
+  if (dose.status === "late") {
+    return `
+      <button type="button" data-action="set-dose-status" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" data-status="on-time" class="mt-2 w-full rounded-lg bg-white/80 hover:bg-white border border-emerald-200 text-emerald-700 text-[11px] font-black py-1.5">
+        Mark as given on time
+      </button>
+    `;
+  }
+
+  if (dose.status === "on-time") {
+    return `
+      <button type="button" data-action="set-dose-status" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" data-status="late" class="mt-2 w-full rounded-lg bg-white/80 hover:bg-white border border-orange-200 text-orange-700 text-[11px] font-black py-1.5">
+        Mark as given late
+      </button>
+    `;
+  }
+
+  return "";
 }
 
 function getPetSummariesForDate(dateKey, pets, doseEntries, refillEntries) {

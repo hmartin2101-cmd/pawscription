@@ -116,6 +116,8 @@ export function renderTimeInputs(frequency) {
 export function renderMedications(medications, pets, selectedPetId) {
   const visibleMeds = medications.filter((med) => med.petId === selectedPetId);
 
+  ui.medList.className = "grid sm:grid-cols-2 xl:grid-cols-3 gap-3";
+
   if (!selectedPetId) {
     ui.medList.innerHTML = emptyState("Add a pet before making a medication plan.");
     return;
@@ -195,74 +197,73 @@ function renderMedicationCard(med, pets) {
   const activeAlerts = getActiveAlerts(med, todayDoses);
 
   return `
-    <article class="bg-white rounded-[1.5rem] p-5 shadow-sm border ${activeAlerts.length ? "border-red-200" : "border-stone-100"} space-y-4">
-      <div class="flex justify-between gap-3">
-        <div>
-          <p class="text-xs font-black uppercase tracking-wider" style="color:${pet?.color ?? "#CC5500"}">${pet?.name ?? "Pet"}</p>
-          <h3 class="text-xl font-black text-stone-800">${escapeHtml(med.name)}</h3>
-          <p class="text-sm font-bold text-stone-400">${escapeHtml(med.dosage)} - ${readableFrequency(med.frequency)}</p>
+    <article class="bg-white rounded-2xl p-3 shadow-sm border ${activeAlerts.length ? "border-red-200" : "border-stone-100"} space-y-2">
+      <div class="flex justify-between gap-2 items-start">
+        <div class="min-w-0">
+          <p class="text-[10px] font-black uppercase tracking-wider truncate" style="color:${pet?.color ?? "#CC5500"}">${pet?.name ?? "Pet"}</p>
+          <h3 class="text-base font-black text-stone-800 leading-tight truncate">${escapeHtml(med.name)}</h3>
+          <p class="text-xs font-bold text-stone-400 leading-tight truncate">${escapeHtml(med.dosage)} • ${readableFrequency(med.frequency)}</p>
         </div>
-        <button type="button" data-action="delete-med" data-med-id="${med.id}" class="w-9 h-9 rounded-xl bg-stone-50 hover:bg-red-50 text-stone-400 hover:text-red-600 font-black">X</button>
+        <button type="button" data-action="delete-med" data-med-id="${med.id}" class="shrink-0 w-7 h-7 rounded-lg bg-stone-50 hover:bg-red-50 text-stone-400 hover:text-red-600 font-black text-xs">X</button>
       </div>
 
       ${activeAlerts.length ? `
-        <div class="rounded-2xl border border-red-200 bg-red-50 p-3 space-y-1">
-          ${activeAlerts.map((alert) => `<p class="text-xs font-black text-red-700">${escapeHtml(alert)}</p>`).join("")}
+        <div class="rounded-xl border border-red-200 bg-red-50 p-2 space-y-0.5">
+          ${activeAlerts.map((alert) => `<p class="text-[11px] font-black text-red-700 leading-tight">${escapeHtml(alert)}</p>`).join("")}
         </div>
       ` : ""}
 
       ${med.careAlert ? `
-        <div class="rounded-2xl border border-red-200 bg-red-50 p-3">
-          <p class="text-[10px] font-black text-red-500 uppercase">Care note</p>
-          <p class="text-sm font-black text-red-700">${escapeHtml(med.careAlert)}</p>
+        <div class="rounded-xl border border-red-200 bg-red-50 p-2">
+          <p class="text-[9px] font-black text-red-500 uppercase leading-tight">Care note</p>
+          <p class="text-xs font-bold text-red-700 leading-snug">${escapeHtml(med.careAlert)}</p>
         </div>
       ` : ""}
 
       ${med.instructions ? `
-        <div class="rounded-2xl border border-stone-100 bg-stone-50 p-3">
-          <p class="text-[10px] font-black text-stone-400 uppercase">Instructions</p>
-          <p class="text-sm font-black text-stone-700">${escapeHtml(med.instructions)}</p>
+        <div class="rounded-xl border border-stone-100 bg-stone-50 p-2">
+          <p class="text-[9px] font-black text-stone-400 uppercase leading-tight">Instructions</p>
+          <p class="text-xs font-bold text-stone-700 leading-snug">${escapeHtml(med.instructions)}</p>
         </div>
       ` : ""}
 
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-stone-50 rounded-2xl p-3">
-          <p class="text-[10px] font-black text-stone-400 uppercase">Usual time</p>
-          <p class="text-sm font-black text-stone-700">${schedule}</p>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-stone-50 rounded-xl p-2 min-w-0">
+          <p class="text-[9px] font-black text-stone-400 uppercase leading-tight">Time</p>
+          <p class="text-xs font-black text-stone-700 truncate">${schedule}</p>
         </div>
-        <div class="bg-stone-50 rounded-2xl p-3">
-          <p class="text-[10px] font-black text-stone-400 uppercase">Remind me</p>
-          <p class="text-sm font-black text-stone-700">${reminderText(med.reminderMinutes)}</p>
+        <div class="bg-stone-50 rounded-xl p-2 min-w-0">
+          <p class="text-[9px] font-black text-stone-400 uppercase leading-tight">Reminder</p>
+          <p class="text-xs font-black text-stone-700 truncate">${reminderText(med.reminderMinutes)}</p>
+        </div>
+        <div class="${refillClass} rounded-xl border p-2 min-w-0">
+          <p class="text-[9px] font-black uppercase leading-tight">Refill</p>
+          <p class="text-xs font-black truncate">${formatDateShort(med.refillReminderDate)}</p>
         </div>
       </div>
 
       ${todayDoses.length ? `
-        <div class="space-y-2">
-          <p class="text-[10px] font-black text-stone-400 uppercase px-1">Today's doses</p>
+        <div class="space-y-1">
+          <p class="text-[9px] font-black text-stone-400 uppercase px-1 leading-tight">Today's doses</p>
           ${todayDoses.map(renderDoseCheckbox).join("")}
         </div>
-      ` : '<p class="text-sm font-bold text-stone-400 bg-stone-50 rounded-2xl p-3">Use this one only when needed.</p>'}
-
-      <div class="${refillClass} rounded-2xl border p-3">
-        <p class="text-[10px] font-black uppercase">Refill reminder</p>
-        <p class="text-sm font-black">${formatDate(med.refillReminderDate)}</p>
-      </div>
+      ` : '<p class="text-xs font-bold text-stone-400 bg-stone-50 rounded-xl p-2">Use only when needed.</p>'}
     </article>
   `;
 }
 
 function renderDoseCheckbox(dose) {
   const checked = dose.log?.givenAt ? "checked" : "";
-  const givenAt = dose.log?.givenAt ? `Given at ${formatDateTime(dose.log.givenAt)}` : dose.statusText;
+  const givenAt = dose.log?.givenAt ? `Given ${formatDateTime(dose.log.givenAt)}` : dose.statusText;
   const redState = dose.status === "missed" || dose.status === "late";
   const greenState = dose.status === "on-time";
 
   return `
-    <label class="flex items-start gap-3 rounded-2xl border p-3 cursor-pointer ${redState ? "border-red-200 bg-red-50" : greenState ? "border-emerald-200 bg-emerald-50" : "border-stone-100 bg-stone-50"}">
-      <input type="checkbox" ${checked} data-action="toggle-dose" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" class="mt-1 w-5 h-5 accent-[#CC5500]">
+    <label class="flex items-start gap-2 rounded-xl border p-2 cursor-pointer ${redState ? "border-red-200 bg-red-50" : greenState ? "border-emerald-200 bg-emerald-50" : "border-stone-100 bg-stone-50"}">
+      <input type="checkbox" ${checked} data-action="toggle-dose" data-med-id="${dose.medId}" data-dose-key="${dose.doseKey}" class="mt-0.5 w-4 h-4 accent-[#CC5500] shrink-0">
       <span class="min-w-0">
-        <span class="block text-sm font-black ${redState ? "text-red-700" : greenState ? "text-emerald-700" : "text-stone-700"}">${formatTime(dose.time)} dose</span>
-        <span class="block text-xs font-bold ${redState ? "text-red-500" : greenState ? "text-emerald-600" : "text-stone-400"}">${givenAt}</span>
+        <span class="block text-xs font-black leading-tight ${redState ? "text-red-700" : greenState ? "text-emerald-700" : "text-stone-700"}">${formatTime(dose.time)} dose</span>
+        <span class="block text-[11px] font-bold leading-tight ${redState ? "text-red-500" : greenState ? "text-emerald-600" : "text-stone-400"}">${givenAt}</span>
       </span>
     </label>
   `;
@@ -372,7 +373,7 @@ function calendarClass(isToday, hasMissed) {
 
 function emptyState(message) {
   return `
-    <div class="md:col-span-2 bg-white rounded-[1.5rem] border border-dashed border-stone-200 p-8 text-center">
+    <div class="sm:col-span-2 xl:col-span-3 bg-white rounded-[1.5rem] border border-dashed border-stone-200 p-8 text-center">
       <p class="text-stone-400 font-black">${message}</p>
     </div>
   `;
@@ -406,6 +407,11 @@ function reminderText(minutes) {
 function formatDate(value) {
   if (!value) return "Not set";
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+}
+
+function formatDateShort(value) {
+  if (!value) return "Not set";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(`${value}T00:00:00`));
 }
 
 function formatDateTime(value) {
